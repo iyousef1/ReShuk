@@ -1,50 +1,88 @@
-# Welcome to your Expo app 👋
+# ReShuk 🛍️🤖
+AI-powered second-hand marketplace that helps people buy and sell faster with smarter listings, fair pricing, and safer meetups.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> Replace this line with your 1-sentence pitch (what ReShuk is + who it’s for + why it’s better).
 
-## Get started
+---
 
-1. Install dependencies
+## Table of Contents
+- [Demo](#demo)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [System Overview](#system-overview)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Scripts](#scripts)
+- [Project Structure](#project-structure)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## Demo
+- Live: **TBD**
+- Figma: **TBD**
+- Screenshots: put images in `/docs/screenshots` and link them here.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## Key Features
+### Marketplace Core
+- Create listings with title, description, category, photos, price, and location
+- Search + filters (category, price range, condition, distance)
+- Favorites / saved items
+- Chat or messaging between buyer & seller
+- Real-time updates/notifications for new messages and listing status
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### AI Assist (optional / in-progress)
+- **Price estimation** based on item category + condition + similar listings
+- **Condition hints** from photos (basic prompts / model-assisted suggestions)
+- **Smarter listing assistant** (suggests title/keywords, highlights, and fair price range)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Safety & Trust (optional)
+- Meet-up suggestions (public places, daylight preference, distance-aware)
+- Report / block users
+- Basic reputation signals (verified phone/email, completed trades count)
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## Tech Stack
+> Update this section to match your repo.
 
+**Client**
+- React Native (Expo) / or React (Web)
+- Expo Router / or React Navigation
+- State: Zustand / Redux / React Query (choose what you actually use)
+
+**Backend**
+- Node.js + Express **or** Firebase/Supabase **or** your custom API
+- Database: MongoDB / Firestore / Postgres
+- Storage: Firebase Storage / S3 / Supabase Storage
+
+**AI**
+- Lightweight rules + embeddings/search **or** model API
+- Image analysis pipeline (optional)
+
+---
+
+## System Overview
+High-level flow:
+1. User signs up / logs in
+2. User creates a listing → uploads images → saves metadata
+3. Buyers browse/search → message sellers
+4. AI assistant can suggest price/keywords/condition notes during listing creation
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js (LTS)
+- Git
+- (If mobile) Expo Go app or iOS/Android emulator
+
+### Clone
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+git clone <YOUR_REPO_URL>
+cd reshuk
