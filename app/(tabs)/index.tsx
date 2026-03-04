@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -6,13 +7,18 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 
-type Category = { id: string; name: string; emoji: string };
+type Category = {
+  id: string;
+  name: string;
+  emoji: string;
+  color: string;
+};
+
 type Listing = {
   id: string;
   title: string;
@@ -23,14 +29,14 @@ type Listing = {
 };
 
 const CATEGORIES: Category[] = [
-  { id: "c1", name: "Electronics", emoji: "📱" },
-  { id: "c2", name: "Cars", emoji: "🚗" },
-  { id: "c3", name: "Home", emoji: "🏠" },
-  { id: "c4", name: "Fashion", emoji: "👕" },
-  { id: "c5", name: "Gaming", emoji: "🎮" },
-  { id: "c6", name: "Bikes", emoji: "🚲" },
-  { id: "c7", name: "Books", emoji: "📚" },
-  { id: "c8", name: "Sports", emoji: "🏋️" },
+  { id: "c1", name: "Electronics", emoji: "📱", color: "#2563eb" },
+  { id: "c2", name: "Cars", emoji: "🚗", color: "#f59e0b" },
+  { id: "c3", name: "Home", emoji: "🏠", color: "#10b981" },
+  { id: "c4", name: "Fashion", emoji: "👕", color: "#ec4899" },
+  { id: "c5", name: "Gaming", emoji: "🎮", color: "#8b5cf6" },
+  { id: "c6", name: "Bikes", emoji: "🚲", color: "#14b8a6" },
+  { id: "c7", name: "Books", emoji: "📚", color: "#f97316" },
+  { id: "c8", name: "Sports", emoji: "🏋️", color: "#ef4444" },
 ];
 
 const MOCK_LISTINGS: Listing[] = [
@@ -85,19 +91,36 @@ function formatILS(price: number) {
   return `₪${price.toLocaleString("en-US")}`;
 }
 
+function getConditionStyle(condition: Listing["condition"]) {
+  switch (condition) {
+    case "New":
+      return "bg-emerald-500/15 text-emerald-300 border border-emerald-400/20";
+    case "Like New":
+      return "bg-sky-500/15 text-sky-300 border border-sky-400/20";
+    case "Good":
+      return "bg-amber-500/15 text-amber-300 border border-amber-400/20";
+    case "Fair":
+    default:
+      return "bg-rose-500/15 text-rose-300 border border-rose-400/20";
+  }
+}
+
 export default function HomeScreen() {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     return MOCK_LISTINGS.filter((l) => {
       const matchesQuery =
         !q ||
         l.title.toLowerCase().includes(q) ||
-        l.location.toLowerCase().includes(q);
-      // category filtering is mocked here; in real app you’ll filter by listing.categoryId
+        l.location.toLowerCase().includes(q) ||
+        l.condition.toLowerCase().includes(q);
+
       const matchesCategory = !selectedCategory || true;
+
       return matchesQuery && matchesCategory;
     });
   }, [query, selectedCategory]);
@@ -106,152 +129,333 @@ export default function HomeScreen() {
   const latest = filtered.slice(0, 10);
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.brand}>ReShuk</Text>
-            <Text style={styles.subtitle}>Find deals near you</Text>
+    <SafeAreaView className="flex-1 bg-slate-950">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 36 }}
+        className="flex-1"
+      >
+        <View className="px-5 pt-4">
+          <Header />
+
+          <View className="mt-5 rounded-[28px] border border-white/10 bg-slate-900 px-4 py-4">
+            <View className="flex-row items-start justify-between">
+              <View className="flex-1 pr-3">
+                <Text className="text-3xl font-extrabold tracking-tight text-white">
+                  Discover better second-hand deals
+                </Text>
+                <Text className="mt-2 text-sm leading-5 text-slate-400">
+                  Buy smarter, sell faster, and explore trusted listings near
+                  you.
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={() => router.push("/sell")}
+                className="rounded-2xl bg-white px-4 py-3"
+              >
+                <Text className="font-bold text-slate-950">+ Sell</Text>
+              </Pressable>
+            </View>
+
+            <View className="mt-5 flex-row items-center rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3">
+              <Ionicons name="search" size={18} color="#94a3b8" />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search items, brands, locations..."
+                placeholderTextColor="#64748b"
+                returnKeyType="search"
+                className="ml-3 flex-1 text-[15px] text-white"
+              />
+              {query.length > 0 && (
+                <Pressable onPress={() => setQuery("")} hitSlop={10}>
+                  <Ionicons name="close-circle" size={20} color="#64748b" />
+                </Pressable>
+              )}
+            </View>
+
+            <View className="mt-4 flex-row flex-wrap gap-2">
+              <FilterPill
+                label="Near me"
+                active={query.toLowerCase() === "jerusalem"}
+                onPress={() => setQuery("Jerusalem")}
+                icon="location-outline"
+              />
+              <FilterPill
+                label="Like New"
+                active={query.toLowerCase() === "like new"}
+                onPress={() => setQuery("Like New")}
+                icon="sparkles-outline"
+              />
+              <FilterPill
+                label="Clear"
+                active={false}
+                onPress={() => {
+                  setQuery("");
+                  setSelectedCategory(null);
+                }}
+                icon="refresh-outline"
+              />
+            </View>
           </View>
 
-          <Pressable
-            style={styles.sellButton}
-            onPress={() => router.push("/sell")}
-          >
-            <Text style={styles.sellButtonText}>+ Sell</Text>
-          </Pressable>
-        </View>
-
-        {/* Search */}
-        <View style={styles.searchWrap}>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search items, brands, locations…"
-            placeholderTextColor="#7b8794"
-            style={styles.search}
-            returnKeyType="search"
+          <SectionHeader
+            title="Browse categories"
+            actionText="See all"
+            onAction={() => router.push("/categories")}
           />
-        </View>
 
-        {/* Quick chips */}
-        <View style={styles.chipsRow}>
-          <Chip
-            label="Near me"
-            onPress={() => setQuery("Jerusalem")}
-            active={query.toLowerCase() === "jerusalem"}
+          <View className="flex-row flex-wrap justify-between">
+            {CATEGORIES.slice(0, 8).map((category) => {
+              const active = selectedCategory === category.id;
+
+              return (
+                <Pressable
+                  key={category.id}
+                  onPress={() =>
+                    setSelectedCategory((prev) =>
+                      prev === category.id ? null : category.id
+                    )
+                  }
+                  className={`mb-3 w-[48.5%] rounded-3xl border px-4 py-4 ${
+                    active
+                      ? "border-sky-400 bg-slate-900"
+                      : "border-white/10 bg-slate-900/70"
+                  }`}
+                >
+                  <View
+                    className="mb-3 h-11 w-11 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: `${category.color}22` }}
+                  >
+                    <Text className="text-xl">{category.emoji}</Text>
+                  </View>
+
+                  <Text className="text-base font-bold text-white">
+                    {category.name}
+                  </Text>
+                  <Text className="mt-1 text-xs text-slate-400">
+                    Explore listings
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <SectionHeader
+            title="Featured picks"
+            actionText="View more"
+            onAction={() => router.push("/feed")}
           />
-          <Chip
-            label="Under ₪300"
-            onPress={() => setQuery("")}
-            active={false}
+
+          <FlatList
+            horizontal
+            data={featured}
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 8 }}
+            ItemSeparatorComponent={() => <View style={{ width: 14 }} />}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/listing/[id]",
+                    params: { id: item.id },
+                  })
+                }
+                className="w-[280px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-900"
+              >
+                <Image
+                  source={{ uri: item.imageUrl }}
+                  className="h-40 w-full"
+                  resizeMode="cover"
+                />
+
+                <View className="p-4">
+                  <View className="mb-3 flex-row items-center justify-between">
+                    <View
+                      className={`rounded-full px-3 py-1 ${getConditionStyle(
+                        item.condition
+                      )}`}
+                    >
+                      <Text className="text-[11px] font-semibold">
+                        {item.condition}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row items-center">
+                      <Ionicons
+                        name="location-outline"
+                        size={14}
+                        color="#94a3b8"
+                      />
+                      <Text className="ml-1 text-xs text-slate-400">
+                        {item.location}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text
+                    numberOfLines={1}
+                    className="text-lg font-extrabold text-white"
+                  >
+                    {item.title}
+                  </Text>
+
+                  <Text className="mt-2 text-2xl font-black text-white">
+                    {formatILS(item.price)}
+                  </Text>
+
+                  <View className="mt-4 flex-row items-center justify-between">
+                    <Text className="text-sm text-slate-400">
+                      Verified seller
+                    </Text>
+                    <View className="flex-row items-center">
+                      <Text className="mr-1 text-sm font-semibold text-sky-300">
+                        View
+                      </Text>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={14}
+                        color="#7dd3fc"
+                      />
+                    </View>
+                  </View>
+                </View>
+              </Pressable>
+            )}
           />
-          <Chip
-            label="Like New"
-            onPress={() => setQuery("like new")}
-            active={query.toLowerCase() === "like new"}
+
+          <SectionHeader
+            title="Latest deals"
+            actionText="Refresh"
+            onAction={() => {}}
           />
+
+          <View className="gap-3">
+            {latest.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/listing/[id]",
+                    params: { id: item.id },
+                  })
+                }
+                className="flex-row items-center rounded-[24px] border border-white/10 bg-slate-900/80 p-3"
+              >
+                <Image
+                  source={{ uri: item.imageUrl }}
+                  className="h-[72px] w-[72px] rounded-2xl"
+                  resizeMode="cover"
+                />
+
+                <View className="ml-3 flex-1">
+                  <View className="flex-row items-start justify-between">
+                    <Text
+                      numberOfLines={1}
+                      className="mr-2 flex-1 text-[15px] font-bold text-white"
+                    >
+                      {item.title}
+                    </Text>
+
+                    <Text className="text-[15px] font-extrabold text-white">
+                      {formatILS(item.price)}
+                    </Text>
+                  </View>
+
+                  <View className="mt-2 flex-row items-center">
+                    <Ionicons
+                      name="location-outline"
+                      size={14}
+                      color="#94a3b8"
+                    />
+                    <Text className="ml-1 text-sm text-slate-400">
+                      {item.location}
+                    </Text>
+
+                    <Text className="mx-2 text-slate-600">•</Text>
+
+                    <Text
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${getConditionStyle(
+                        item.condition
+                      )}`}
+                    >
+                      {item.condition}
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            ))}
+          </View>
         </View>
-
-        {/* Categories */}
-        <SectionTitle title="Categories" actionText="See all" onAction={() => router.push("/categories")} />
-        <View style={styles.categoriesGrid}>
-          {CATEGORIES.slice(0, 8).map((c) => (
-            <Pressable
-              key={c.id}
-              style={[
-                styles.categoryCard,
-                selectedCategory === c.id && styles.categoryCardActive,
-              ]}
-              onPress={() =>
-                setSelectedCategory((prev) => (prev === c.id ? null : c.id))
-              }
-            >
-              <Text style={styles.categoryEmoji}>{c.emoji}</Text>
-              <Text style={styles.categoryName}>{c.name}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Featured */}
-        <SectionTitle title="Featured" actionText="View more" onAction={() => router.push("/feed")} />
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={featured}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ gap: 12, paddingVertical: 6 }}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.featureCard}
-              onPress={() => router.push(`/listing/${item.id}`)}
-            >
-              <Image source={{ uri: item.imageUrl }} style={styles.featureImg} />
-              <View style={styles.featureMeta}>
-                <Text style={styles.featureTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.featurePrice}>{formatILS(item.price)}</Text>
-                <Text style={styles.featureSub}>
-                  {item.location} • {item.condition}
-                </Text>
-              </View>
-            </Pressable>
-          )}
-        />
-
-        {/* Latest deals */}
-        <SectionTitle title="Latest deals" actionText="Refresh" onAction={() => { /* hook to fetch */ }} />
-        <View style={{ gap: 10 }}>
-          {latest.map((item) => (
-            <Pressable
-              key={item.id}
-              style={styles.rowCard}
-              onPress={() => router.push(`/listing/${item.id}`)}
-            >
-              <Image source={{ uri: item.imageUrl }} style={styles.rowImg} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.rowSub}>
-                  {item.location} • {item.condition}
-                </Text>
-              </View>
-              <Text style={styles.rowPrice}>{formatILS(item.price)}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={{ height: 28 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Chip({
+function Header() {
+  return (
+    <View className="flex-row items-center justify-between">
+      <View>
+        <Text className="text-[30px] font-black tracking-tight text-white">
+          ReShuk
+        </Text>
+        <Text className="mt-1 text-sm text-slate-400">
+          Find quality deals nearby
+        </Text>
+      </View>
+
+      <View className="flex-row items-center gap-3">
+        <Pressable className="h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-900">
+          <Ionicons name="notifications-outline" size={20} color="#fff" />
+        </Pressable>
+
+        <Pressable className="h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-900">
+          <Ionicons name="person-outline" size={20} color="#fff" />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function FilterPill({
   label,
   onPress,
   active,
+  icon,
 }: {
   label: string;
   onPress: () => void;
   active: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.chip, active && styles.chipActive]}
+      className={`flex-row items-center rounded-full px-4 py-2.5 ${
+        active
+          ? "bg-sky-400/20 border border-sky-300/30"
+          : "bg-slate-800 border border-white/10"
+      }`}
     >
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>
+      <Ionicons
+        name={icon}
+        size={14}
+        color={active ? "#7dd3fc" : "#94a3b8"}
+      />
+      <Text
+        className={`ml-2 text-sm font-semibold ${
+          active ? "text-sky-200" : "text-slate-300"
+        }`}
+      >
         {label}
       </Text>
     </Pressable>
   );
 }
 
-function SectionTitle({
+function SectionHeader({
   title,
   actionText,
   onAction,
@@ -261,127 +465,18 @@ function SectionTitle({
   onAction?: () => void;
 }) {
   return (
-    <View style={styles.sectionRow}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {!!actionText && !!onAction && (
+    <View className="mb-4 mt-7 flex-row items-center justify-between">
+      <Text className="text-xl font-extrabold tracking-tight text-white">
+        {title}
+      </Text>
+
+      {actionText && onAction ? (
         <Pressable onPress={onAction} hitSlop={10}>
-          <Text style={styles.sectionAction}>{actionText}</Text>
+          <Text className="text-sm font-semibold text-sky-300">
+            {actionText}
+          </Text>
         </Pressable>
-      )}
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#0b1220" },
-  container: { padding: 16, paddingBottom: 32 },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  brand: { fontSize: 28, fontWeight: "800", color: "#ffffff" },
-  subtitle: { marginTop: 2, color: "#b7c1d1" },
-
-  sellButton: {
-    backgroundColor: "#ffffff",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-  },
-  sellButtonText: { color: "#0b1220", fontWeight: "800" },
-
-  searchWrap: {
-    backgroundColor: "#121c2f",
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "#1f2a40",
-  },
-  search: { color: "#ffffff", fontSize: 15 },
-
-  chipsRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: "#25334f",
-    backgroundColor: "#121c2f",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-  },
-  chipActive: {
-    backgroundColor: "#ffffff",
-    borderColor: "#ffffff",
-  },
-  chipText: { color: "#c9d3e3", fontWeight: "700" },
-  chipTextActive: { color: "#0b1220" },
-
-  sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 18,
-    marginBottom: 10,
-  },
-  sectionTitle: { color: "#ffffff", fontSize: 18, fontWeight: "800" },
-  sectionAction: { color: "#b7c1d1", fontWeight: "700" },
-
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  categoryCard: {
-    width: "48%",
-    backgroundColor: "#121c2f",
-    borderColor: "#1f2a40",
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  categoryCardActive: {
-    borderColor: "#ffffff",
-  },
-  categoryEmoji: { fontSize: 20 },
-  categoryName: { color: "#ffffff", fontWeight: "800" },
-
-  featureCard: {
-    width: 240,
-    backgroundColor: "#121c2f",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#1f2a40",
-    overflow: "hidden",
-  },
-  featureImg: { width: "100%", height: 120 },
-  featureMeta: { padding: 12 },
-  featureTitle: { color: "#ffffff", fontWeight: "800", marginBottom: 6 },
-  featurePrice: { color: "#ffffff", fontWeight: "900", fontSize: 16 },
-  featureSub: { color: "#b7c1d1", marginTop: 4 },
-
-  rowCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "#121c2f",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#1f2a40",
-    padding: 12,
-  },
-  rowImg: { width: 56, height: 56, borderRadius: 12 },
-  rowTitle: { color: "#ffffff", fontWeight: "800" },
-  rowSub: { color: "#b7c1d1", marginTop: 4 },
-  rowPrice: { color: "#ffffff", fontWeight: "900" },
-});
