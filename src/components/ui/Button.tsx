@@ -1,22 +1,48 @@
-import { Pressable, Text } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 
-type Props = {
+type ButtonProps = {
   title: string;
-  onPress?: () => void;
-  variant?: "primary" | "secondary";
+  onPress: () => void;
+  variant?: 'primary' | 'outline';
+  isLoading?: boolean;
+  className?: string; // To allow overriding styles from the parent
 };
 
-export function Button({ title, onPress, variant = "primary" }: Props) {
-  const styles =
-    variant === "primary"
-      ? "bg-emerald-600 active:bg-emerald-700"
-      : "bg-slate-200 active:bg-slate-300";
+export function Button({ 
+  title, 
+  onPress, 
+  variant = 'primary', 
+  isLoading = false, 
+  className = '' 
+}: ButtonProps) {
+  
+  // Base styling for structure and interaction
+  const baseStyle = "py-4 px-6 rounded-xl flex-row justify-center items-center active:opacity-80";
+  
+  // Apply our new Tailwind color tokens based on the variant
+  const buttonVariants = {
+    primary: "bg-action-cta", // Professional Teal
+    outline: "border-2 border-brand-primary bg-transparent dark:border-action-link", // Deep Teal border
+  };
 
-  const textStyles = variant === "primary" ? "text-white" : "text-slate-900";
+  const textVariants = {
+    primary: "text-brand-accent font-bold text-lg", // Pure White text
+    outline: "text-brand-primary dark:text-action-link font-bold text-lg",
+  };
 
   return (
-    <Pressable onPress={onPress} className={`items-center rounded-2xl px-4 py-4 ${styles}`}>
-      <Text className={`text-base font-semibold ${textStyles}`}>{title}</Text>
-    </Pressable>
+    <TouchableOpacity 
+      onPress={onPress} 
+      disabled={isLoading}
+      className={`${baseStyle} ${buttonVariants[variant]} ${className}`}
+    >
+      {isLoading ? (
+        <ActivityIndicator color={variant === 'primary' ? '#FFFFFF' : '#0F766E'} />
+      ) : (
+        <Text className={textVariants[variant]}>
+          {title}
+        </Text>
+      )}
+    </TouchableOpacity>
   );
 }

@@ -9,8 +9,12 @@ type Props = PropsWithChildren<{
 export function Screen({ children, scrollable = false }: Props) {
   if (scrollable) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      // Replaced bg-slate-50 with our new light and dark surface colors
+      <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark">
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }} 
+          keyboardShouldPersistTaps="handled"
+        >
           {children}
         </ScrollView>
       </SafeAreaView>
@@ -18,7 +22,8 @@ export function Screen({ children, scrollable = false }: Props) {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    // Applied the same background fix here
+    <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark">
       <View className="flex-1">{children}</View>
     </SafeAreaView>
   );

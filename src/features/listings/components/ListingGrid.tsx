@@ -1,21 +1,53 @@
-import { View } from "react-native";
+import React from 'react';
+import { FlatList, Text, View } from 'react-native';
+// Make sure this is a named import (with brackets) matching the export above
+import { ListingCard } from './ListingCard';
 
-import { EmptyState } from "@/src/components/feedback/EmptyState";
-import { Loading } from "@/src/components/feedback/Loading";
-import { useListings } from "../hooks";
-import { ListingCard } from "./ListingCard";
+export type Listing = {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  location: string;
+  category: string;
+};
 
-export function ListingGrid() {
-  const { listings, loading } = useListings();
+type ListingGridProps = {
+  listings: Listing[];
+  onListingPress: (id: string) => void;
+};
 
-  if (loading) return <Loading label="Loading listings..." />;
-  if (!listings.length) return <EmptyState title="No listings found" description="Try again later." />;
+export function ListingGrid({ listings, onListingPress }: ListingGridProps) {
+  
+  if (!listings || listings.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center py-10">
+        <Text className="text-text-muted dark:text-text-darkMuted text-lg">
+          No listings found.
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View className="gap-4">
-      {listings.map((listing) => (
-        <ListingCard key={listing.id} listing={listing} />
-      ))}
-    </View>
+    <FlatList
+      data={listings}
+      keyExtractor={(item) => item.id}
+      numColumns={2} 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 20 }} 
+      columnWrapperStyle={{ justifyContent: 'space-between', gap: 12 }}
+      renderItem={({ item }) => (
+        <View style={{ width: '48%' }}>
+          <ListingCard
+            title={item.title}
+            price={`₪${item.price.toLocaleString()}`} // Formatting the number to a currency string
+            imageUrl={item.image} // Mapping your 'image' field to 'imageUrl'
+            location={item.location}
+            onPress={() => onListingPress(item.id)}
+          />
+        </View>
+      )}
+    />
   );
 }

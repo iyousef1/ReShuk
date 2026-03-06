@@ -9,7 +9,16 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(auth)" />
+        
+        {/* We make the entire Auth flow slide up from the bottom */}
+        <Stack.Screen 
+          name="(auth)" 
+          options={{ 
+            presentation: "modal", 
+            animation: "slide_from_bottom" 
+          }} 
+        />
+        
         <Stack.Screen
           name="(modals)"
           options={{ presentation: "modal", animation: "slide_from_bottom" }}

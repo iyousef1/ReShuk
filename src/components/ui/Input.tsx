@@ -1,22 +1,37 @@
-import { Text, TextInput, TextInputProps, View } from "react-native";
+import { Text, TextInput, TextInputProps, View } from 'react-native';
 
-type Props = TextInputProps & {
+interface InputProps extends TextInputProps {
   label?: string;
-};
+  error?: string;
+  className?: string;
+}
 
-export function Input({ label, multiline, numberOfLines, ...props }: Props) {
+export function Input({ label, error, className = '', ...props }: InputProps) {
   return (
-    <View className="gap-2">
-      {label ? <Text className="text-sm font-medium text-slate-700">{label}</Text> : null}
+    <View className={`mb-4 ${className}`}>
+      {/* Optional Label */}
+      {label && (
+        <Text className="text-text-primary dark:text-text-darkPrimary font-semibold mb-1 ml-1">
+          {label}
+        </Text>
+      )}
+      
+      {/* The Actual Input Field */}
       <TextInput
-        placeholderTextColor="#94a3b8"
-        multiline={multiline}
-        numberOfLines={numberOfLines}
-        className={`rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base text-slate-900 ${
-          multiline ? "min-h-28" : ""
-        }`}
+        className={`bg-surface-cardLight dark:bg-surface-cardDark text-text-primary dark:text-text-darkPrimary border rounded-xl px-4 py-3 
+          ${error ? 'border-action-error' : 'border-slate-200 dark:border-slate-700'} 
+          focus:border-brand-primary dark:focus:border-action-link`}
+        // Using your Muted Blue Gray for light mode placeholders
+        placeholderTextColor="#94A3B8" 
         {...props}
       />
+      
+      {/* Error Message */}
+      {error && (
+        <Text className="text-action-error text-sm mt-1 ml-1">
+          {error}
+        </Text>
+      )}
     </View>
   );
 }

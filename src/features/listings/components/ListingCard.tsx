@@ -1,24 +1,49 @@
-import { Link } from "expo-router";
-import { Image, Text, View } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 
-import { Card } from "@/src/components/ui/Card";
-import { Listing } from "@/src/types/listing";
+export default function ListingCard({ item }: { item: any }) {
+  const router = useRouter();
 
-type Props = {
-  listing: Listing;
-};
+  // Safely grab the first image from your Firebase array
+  const imageUrl = item.image_url && item.image_url.length > 0 
+    ? item.image_url[0] 
+    : 'https://via.placeholder.com/150'; 
 
-export function ListingCard({ listing }: Props) {
   return (
-    <Link href={`/(tabs)/home/${listing.id}` as const} asChild>
-      <Card className="overflow-hidden p-0">
-        <Image source={{ uri: listing.image }} className="h-44 w-full" resizeMode="cover" />
-        <View className="gap-1 p-4">
-          <Text className="text-lg font-semibold text-slate-900">{listing.title}</Text>
-          <Text className="text-base font-bold text-emerald-700">₪{listing.price}</Text>
-          <Text className="text-sm text-slate-500">{listing.location} • {listing.category}</Text>
+    <TouchableOpacity 
+      onPress={() => router.push(`/(tabs)/home/${item.id}`)}
+      className="flex-1 m-2 bg-surface-cardLight dark:bg-surface-cardDark rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm"
+    >
+      <Image 
+        source={{ uri: imageUrl }} 
+        className="w-full h-40 bg-slate-200 dark:bg-slate-800"
+        resizeMode="cover"
+      />
+      
+      <View className="p-3">
+        <Text 
+          className="font-bold text-base text-text-primary dark:text-text-darkPrimary" 
+          numberOfLines={1}
+        >
+          {item.title}
+        </Text>
+        
+        <Text className="text-brand-primary font-extrabold text-lg mt-1">
+          ${item.price}
+        </Text>
+        
+        <View className="flex-row items-center mt-2">
+          <Ionicons name="location-outline" size={14} color="#94A3B8" />
+          <Text 
+            className="text-text-muted dark:text-text-darkMuted text-xs ml-1 flex-1" 
+            numberOfLines={1}
+          >
+            {item.location}
+          </Text>
         </View>
-      </Card>
-    </Link>
+      </View>
+    </TouchableOpacity>
   );
 }
