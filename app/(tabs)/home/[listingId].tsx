@@ -16,8 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Your Architecture Imports
 import { startOrGetChat } from '../../../src/features/chat/api';
 
-// Firebase Imports
-import { doc, getDoc } from 'firebase/firestore';
+// Firebase Imports (Added updateDoc, increment, setDoc for the algorithm)
+import { doc, getDoc, increment, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
 const { width } = Dimensions.get('window');
@@ -40,7 +40,34 @@ export default function ListingDetailScreen() {
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          setListing({ id: docSnap.id, ...docSnap.data() });
+          const itemData = docSnap.data();
+          setListing({ id: docSnap.id, ...itemData });
+
+          // ---------------------------------------------------------
+          // ALGORITHM PHASE 2: THE TRACKER
+          // ---------------------------------------------------------
+          if (auth.currentUser && itemData.search_terms) {
+            const userRef = doc(db, 'users', auth.currentUser.uid);
+            
+            // Build an object that gives +1 to every word in the array
+            const keywordUpdates: any = {};
+            itemData.search_terms.forEach((word: string) => {
+              keywordUpdates[`keyword_scores.${word}`] = increment(1);
+            });
+
+            try {
+              await updateDoc(userRef, keywordUpdates);
+            } catch (err) {
+              // If the user document doesn't exist yet, create it
+              const initialScores: any = {};
+              itemData.search_terms.forEach((word: string) => {
+                initialScores[word] = 1;
+              });
+              await setDoc(userRef, { keyword_scores: initialScores }, { merge: true });
+            }
+          }
+          // ---------------------------------------------------------
+
         } else {
           Alert.alert("Error", "This listing no longer exists.");
           router.back();
@@ -62,7 +89,6 @@ export default function ListingDetailScreen() {
       return;
     }
 
-    // MATCHED TO YOUR DB SCHEMA: looking for seller_id
     const sellerId = listing.seller_id; 
     if (!sellerId) {
       Alert.alert("Error", "This item doesn't have a seller profile attached to it yet.");
@@ -96,7 +122,6 @@ export default function ListingDetailScreen() {
 
   if (!listing) return null;
 
-  // MATCHED TO YOUR DB SCHEMA: Grabbing the first image from the image_url array
   const imageUrl = listing.image_url && listing.image_url.length > 0 
     ? listing.image_url[0] 
     : 'https://via.placeholder.com/400';

@@ -67,6 +67,11 @@ export default function SellDetailsScreen() {
       const uploadedImageUrl = await uploadImageAsync(imageUri as string);
       const newListingRef = doc(collection(db, 'listings'));
 
+      // ---------------------------------------------------------
+      // ALGORITHM PHASE 1: Generate Search Terms
+      // ---------------------------------------------------------
+      const generatedSearchTerms = title.toLowerCase().split(' ').filter(word => word.length > 2);
+
       // Save to Firestore perfectly matching your schema
       await setDoc(newListingRef, {
         id: newListingRef.id,
@@ -79,7 +84,8 @@ export default function SellDetailsScreen() {
         seller_id: auth.currentUser.uid,  
         status: 'active',
         is_ai_priced: false,              
-        created_at: serverTimestamp(),    
+        created_at: serverTimestamp(),
+        search_terms: generatedSearchTerms // <-- Algorithm tags added here!
       });
 
       Alert.alert("Success!", "Your item is now live.");

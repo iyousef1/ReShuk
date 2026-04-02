@@ -1,0 +1,1202 @@
+[
+  {
+    "title": "Apple iPhone 13 Pro 128GB",
+    "price": 2499,
+    "category": "Electronics",
+    "description": "Very clean with a healthy battery and only light frame wear from normal use. It has Face ID, a sharp OLED display, and smooth performance for everyday apps and photos.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800"]
+  },
+  {
+    "title": "Apple iPhone 12 64GB",
+    "price": 1790,
+    "category": "Electronics",
+    "description": "Used carefully in a case and the screen is in good condition with minor edge marks. It includes 5G support, strong cameras, and reliable battery life for daily use.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800"]
+  },
+  {
+    "title": "Samsung Galaxy S23 128GB",
+    "price": 2290,
+    "category": "Electronics",
+    "description": "Excellent condition with no cracks and responsive buttons throughout. It features a bright AMOLED screen, fast Snapdragon performance, and dependable all-day battery.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800"]
+  },
+  {
+    "title": "Samsung Galaxy Tab S8 11 Inch",
+    "price": 1850,
+    "category": "Electronics",
+    "description": "The tablet is clean and fully functional with very small signs of use on the back. It offers a crisp display, stereo speakers, and great multitasking for study or streaming.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800"]
+  },
+  {
+    "title": "Apple MacBook Air M1 13 Inch",
+    "price": 2890,
+    "category": "Electronics",
+    "description": "Kept in a sleeve most of its life and the body looks well maintained. It delivers silent performance, long battery life, and a bright Retina display for work or classes.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=800"]
+  },
+  {
+    "title": "Apple MacBook Pro 14 M1 Pro",
+    "price": 4990,
+    "category": "Electronics",
+    "description": "The laptop is in excellent shape with a tidy keyboard and strong battery health. It has a powerful M1 Pro chip, premium speakers, and a superb Liquid Retina XDR screen.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=800"]
+  },
+  {
+    "title": "Dell XPS 13 Ultrabook",
+    "price": 2390,
+    "category": "Electronics",
+    "description": "This unit is in very good condition with minor lid wear and no technical issues. It comes with a compact premium build, sharp display, and fast SSD for productivity.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=800"]
+  },
+  {
+    "title": "Dell Inspiron 15 Laptop",
+    "price": 1590,
+    "category": "Electronics",
+    "description": "Used at home and everything works smoothly including the ports and webcam. It has a spacious 15 inch screen, comfortable keyboard, and enough power for office tasks.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=800"]
+  },
+  {
+    "title": "Sony WH-1000XM5 Headphones",
+    "price": 1090,
+    "category": "Electronics",
+    "description": "The ear cushions are clean and the headphones hold charge properly. They offer top-tier noise cancelling, detailed sound, and a comfortable fit for long listening sessions.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800"]
+  },
+  {
+    "title": "Logitech MX Master 3S Mouse",
+    "price": 290,
+    "category": "Electronics",
+    "description": "Lightly used on a desk setup and the scroll wheel feels precise. It features silent clicks, ergonomic shaping, and excellent battery life for work across multiple devices.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1527814050087-3793815479db?w=800"]
+  },
+  {
+    "title": "Logitech G Pro X Keyboard",
+    "price": 390,
+    "category": "Electronics",
+    "description": "The keyboard is in solid condition with clean keycaps and smooth switches. It has responsive gaming performance, compact styling, and customizable RGB lighting.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800"]
+  },
+  {
+    "title": "Apple Watch Series 8 45mm",
+    "price": 1390,
+    "category": "Electronics",
+    "description": "The watch has been worn carefully and the display looks very good. It includes fitness tracking, notifications, and reliable health features in a premium aluminum body.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800"]
+  },
+  {
+    "title": "Samsung Galaxy Watch 6 44mm",
+    "price": 990,
+    "category": "Electronics",
+    "description": "Good overall condition with minor strap wear and a bright scratch-free screen. It delivers sleep tracking, fitness stats, and smooth integration with Android phones.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800"]
+  },
+  {
+    "title": "Sony PlayStation 5 Console",
+    "price": 2190,
+    "category": "Electronics",
+    "description": "The console is fully functional and runs quietly without overheating issues. It provides fast load times, strong graphics performance, and includes one original controller.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=800"]
+  },
+  {
+    "title": "Nintendo Switch OLED Console",
+    "price": 1290,
+    "category": "Electronics",
+    "description": "Very good condition with clean Joy-Cons and a vibrant screen. It features the improved OLED panel, versatile handheld or docked play, and strong family gaming value.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=800"]
+  },
+  {
+    "title": "Apple iPad Air 5th Gen",
+    "price": 2090,
+    "category": "Electronics",
+    "description": "The body is clean with only tiny cosmetic marks near one corner. It has a fast M1 chip, vivid display, and works great for note taking, browsing, or creative apps.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800"]
+  },
+  {
+    "title": "Samsung 27 Inch Curved Monitor",
+    "price": 790,
+    "category": "Electronics",
+    "description": "The panel is in good shape with no dead pixels noticed during testing. It offers an immersive curved design, sharp visuals, and smooth performance for work or entertainment.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"]
+  },
+  {
+    "title": "Dell 24 Inch USB-C Monitor",
+    "price": 690,
+    "category": "Electronics",
+    "description": "Well maintained and used mainly for office work at a desk. It includes a clean IPS panel, USB-C connectivity, and adjustable stand for a practical workstation.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"]
+  },
+  {
+    "title": "JBL Flip 6 Bluetooth Speaker",
+    "price": 390,
+    "category": "Electronics",
+    "description": "The speaker is in good condition and the battery still lasts well. It delivers punchy sound, waterproof durability, and easy Bluetooth pairing for indoor or outdoor use.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800"]
+  },
+  {
+    "title": "Sony SRS-XB33 Bluetooth Speaker",
+    "price": 420,
+    "category": "Electronics",
+    "description": "Used occasionally and all buttons and ports function correctly. It has strong bass, water resistance, and long battery life for portable music sessions.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800"]
+  },
+  {
+    "title": "Anker 737 Power Bank",
+    "price": 340,
+    "category": "Electronics",
+    "description": "The power bank is well kept and charges devices quickly without issues. It supports high output charging, multiple ports, and is ideal for travel or long days out.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1609592854523-8f146d0ad5aa?w=800"]
+  },
+  {
+    "title": "Apple AirPods Pro 2",
+    "price": 790,
+    "category": "Electronics",
+    "description": "The earbuds are clean and the case shows only light surface wear. They include active noise cancellation, excellent call quality, and a compact pocket-friendly design.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1606220588913-b3aacb4d2f37?w=800"]
+  },
+  {
+    "title": "Samsung Galaxy Buds2 Pro",
+    "price": 520,
+    "category": "Electronics",
+    "description": "Lightly used and fully sanitized with strong battery performance. They offer rich sound, noise reduction, and a comfortable low-profile fit for daily listening.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1606220588913-b3aacb4d2f37?w=800"]
+  },
+  {
+    "title": "Amazon Kindle Paperwhite 11th Gen",
+    "price": 490,
+    "category": "Electronics",
+    "description": "The reader is in very good condition and the screen is easy on the eyes. It features a glare-free display, adjustable warm light, and excellent battery life for reading.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800"]
+  },
+  {
+    "title": "Nike Air Max 270 Running Shoes",
+    "price": 420,
+    "category": "Fashion",
+    "description": "The shoes are in very good condition with clean uppers and normal sole wear. They feel cushioned, breathable, and comfortable for casual wear or light training.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"]
+  },
+  {
+    "title": "Adidas Ultraboost 22 Sneakers",
+    "price": 390,
+    "category": "Fashion",
+    "description": "Used carefully and the knit upper still looks fresh and supportive. They offer responsive cushioning, a snug fit, and a versatile sporty style.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"]
+  },
+  {
+    "title": "Levi's 501 Original Jeans",
+    "price": 180,
+    "category": "Fashion",
+    "description": "The denim has softened nicely and there are no tears or stains. They have the classic straight fit, durable fabric, and timeless everyday look.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Levi's Trucker Denim Jacket",
+    "price": 240,
+    "category": "Fashion",
+    "description": "The jacket is in good condition with only minor fading at the seams. It has sturdy buttons, classic chest pockets, and a layer-friendly fit.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Nike Tech Fleece Hoodie",
+    "price": 260,
+    "category": "Fashion",
+    "description": "Worn a few times and still holds its shape very well. It feels lightweight yet warm, with a clean athletic look and useful zip pockets.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Adidas Essentials Track Jacket",
+    "price": 170,
+    "category": "Fashion",
+    "description": "The fabric is tidy and the zipper runs smoothly without snagging. It offers a sporty slim fit, soft feel, and easy everyday styling.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Zara Wool Blend Coat",
+    "price": 310,
+    "category": "Fashion",
+    "description": "The coat is well kept and the lining is intact with no major pilling. It gives a polished smart-casual look, warm feel, and clean structured silhouette.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800"]
+  },
+  {
+    "title": "Uniqlo Oversized Oxford Shirt",
+    "price": 120,
+    "category": "Fashion",
+    "description": "The shirt is in excellent condition and the fabric still feels crisp. It has a relaxed fit, neat collar, and works well for casual or office outfits.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Puma RS-X Casual Sneakers",
+    "price": 250,
+    "category": "Fashion",
+    "description": "Good overall condition with light wear on the outsole and no damage to the upper. They feature bold styling, comfortable cushioning, and everyday versatility.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"]
+  },
+  {
+    "title": "New Balance 574 Classic Sneakers",
+    "price": 290,
+    "category": "Fashion",
+    "description": "The suede and mesh are clean and the pair has been gently used. They provide classic retro style, dependable comfort, and solid daily wear support.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"]
+  },
+  {
+    "title": "Converse Chuck Taylor High Tops",
+    "price": 150,
+    "category": "Fashion",
+    "description": "The canvas is clean and the rubber toe caps are in good shape. They have the iconic high-top look, simple lace-up design, and easy matching style.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"]
+  },
+  {
+    "title": "Ray-Ban Wayfarer Sunglasses",
+    "price": 360,
+    "category": "Fashion",
+    "description": "The frames are in nice condition and the lenses are clear with minor handling marks. They offer timeless styling, solid UV protection, and a sturdy premium feel.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=800"]
+  },
+  {
+    "title": "Fjallraven Kanken Backpack",
+    "price": 210,
+    "category": "Fashion",
+    "description": "The backpack is clean inside and out with zippers working properly. It has a practical square design, durable fabric, and enough space for everyday essentials.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800"]
+  },
+  {
+    "title": "Herschel Little America Backpack",
+    "price": 230,
+    "category": "Fashion",
+    "description": "Used lightly and the straps and lining remain in very good shape. It features a roomy interior, laptop sleeve, and classic outdoor-inspired design.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800"]
+  },
+  {
+    "title": "Michael Kors Leather Tote Bag",
+    "price": 420,
+    "category": "Fashion",
+    "description": "The bag looks elegant and the handles remain firm with only small signs of use. It offers structured storage, quality leather finish, and a polished everyday look.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800"]
+  },
+  {
+    "title": "The North Face Puffer Jacket",
+    "price": 350,
+    "category": "Fashion",
+    "description": "The jacket is in good condition and still feels warm and lofty. It has insulated comfort, a lightweight build, and reliable cold-weather performance.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800"]
+  },
+  {
+    "title": "Patagonia Better Sweater Fleece",
+    "price": 280,
+    "category": "Fashion",
+    "description": "Well maintained and free from major stains or tears. It feels soft, warm, and practical for layering on cool days.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Nike Dri-FIT Training Shorts",
+    "price": 90,
+    "category": "Fashion",
+    "description": "The shorts are clean and the elastic waistband still holds well. They are lightweight, breathable, and great for gym sessions or outdoor runs.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Adidas Adilette Comfort Slides",
+    "price": 95,
+    "category": "Fashion",
+    "description": "The slides are in good used condition with only minor sole wear. They feel cushioned, easy to slip on, and perfect for casual summer use.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"]
+  },
+  {
+    "title": "Levi's Sherpa Lined Jacket",
+    "price": 320,
+    "category": "Fashion",
+    "description": "This jacket has been kept well and the sherpa lining remains soft and tidy. It gives a warm vintage look, durable denim shell, and excellent comfort.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800"]
+  },
+  {
+    "title": "Tommy Hilfiger Polo Shirt",
+    "price": 110,
+    "category": "Fashion",
+    "description": "The shirt is in very good condition and the color still looks rich. It has a classic collar, comfortable cotton feel, and clean everyday styling.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Columbia Waterproof Windbreaker",
+    "price": 190,
+    "category": "Fashion",
+    "description": "Used on a few trips and still repels light rain effectively. It is lightweight, packable, and ideal for windy or unpredictable weather.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800"]
+  },
+  {
+    "title": "Under Armour Gym Duffle Bag",
+    "price": 140,
+    "category": "Fashion",
+    "description": "The bag is clean and the shoulder strap is in good shape. It has a spacious main compartment, durable fabric, and practical gym-ready storage.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800"]
+  },
+  {
+    "title": "Samsonite Cabin Spinner Suitcase",
+    "price": 330,
+    "category": "Fashion",
+    "description": "The suitcase rolls smoothly and the telescopic handle works properly. It has a hard-shell body, smart cabin size, and organized interior compartments.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800"]
+  },
+  {
+    "title": "IKEA MALM 6 Drawer Dresser",
+    "price": 480,
+    "category": "Home",
+    "description": "The dresser is sturdy and all drawers slide smoothly without sticking. It offers generous storage, a simple modern look, and works well in bedrooms or offices.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "IKEA POANG Armchair",
+    "price": 260,
+    "category": "Home",
+    "description": "The chair is in good condition with stable frame support and clean cushions. It provides comfortable seating, a timeless Scandinavian design, and a gentle rocking feel.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "IKEA MICKE Study Desk",
+    "price": 220,
+    "category": "Home",
+    "description": "The desk is well kept with minor surface marks from normal use. It has a compact footprint, cable-friendly design, and practical workspace for study or laptops.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=800"]
+  },
+  {
+    "title": "IKEA KALLAX Shelf Unit",
+    "price": 210,
+    "category": "Home",
+    "description": "The unit is solid and the shelves are clean with no structural issues. It gives flexible storage, a neat cube layout, and easy styling for any room.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Dyson V11 Cordless Vacuum",
+    "price": 950,
+    "category": "Home",
+    "description": "The vacuum is fully functional and the battery still performs well. It offers strong suction, cordless convenience, and easy attachment changes for home cleaning.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Philips Air Fryer XXL",
+    "price": 540,
+    "category": "Home",
+    "description": "Used carefully in a smoke-free home and cleaned after each use. It cooks evenly, has a large basket, and helps make quick meals with less oil.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Nespresso Vertuo Coffee Machine",
+    "price": 430,
+    "category": "Home",
+    "description": "The machine is in very good condition and brews without leaks or issues. It makes rich coffee fast, has a sleek countertop design, and is easy to operate.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800"]
+  },
+  {
+    "title": "KitchenAid Artisan Stand Mixer",
+    "price": 990,
+    "category": "Home",
+    "description": "The mixer is clean and runs smoothly through all speed settings. It has a powerful motor, iconic design, and excellent performance for baking and dough mixing.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "West Elm Wooden Coffee Table",
+    "price": 620,
+    "category": "Home",
+    "description": "The table is sturdy with a few light surface marks from normal living room use. It adds warm wood tone, clean lines, and practical top space for everyday use.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Muji Oak Bedside Table",
+    "price": 240,
+    "category": "Home",
+    "description": "This piece is in excellent condition and the drawer opens smoothly. It has a minimalist oak finish, compact footprint, and useful bedside storage.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Tefal Nonstick Cookware Set",
+    "price": 280,
+    "category": "Home",
+    "description": "The set is gently used and the coating remains in good shape. It heats evenly, cleans easily, and includes practical pieces for daily cooking.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Instant Pot Duo 7 in 1 Cooker",
+    "price": 360,
+    "category": "Home",
+    "description": "The cooker works perfectly and the inner pot looks well maintained. It combines pressure cooking, steaming, and slow cooking in one convenient appliance.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Philips Hue Starter Kit",
+    "price": 410,
+    "category": "Home",
+    "description": "The bulbs and bridge are in excellent working order with no connectivity problems. It brings smart lighting control, adjustable ambiance, and app-based scheduling.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800"]
+  },
+  {
+    "title": "IKEA HEMNES TV Bench",
+    "price": 330,
+    "category": "Home",
+    "description": "The bench is structurally solid and looks clean with minor signs of use. It offers useful media storage, cable management space, and a classic simple finish.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800"]
+  },
+  {
+    "title": "Bissell SpotClean Carpet Cleaner",
+    "price": 390,
+    "category": "Home",
+    "description": "Used occasionally and all hoses and attachments are intact. It is effective on fabric stains, compact to store, and handy for home or car interiors.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Ninja Foodi Blender",
+    "price": 310,
+    "category": "Home",
+    "description": "The blender is in very good condition and blends smoothly without strange noise. It has strong motor power, multiple settings, and handles smoothies or sauces easily.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Electrolux Microwave Oven",
+    "price": 280,
+    "category": "Home",
+    "description": "This microwave is clean inside and heats evenly across different dishes. It features simple controls, practical size, and dependable everyday performance.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Xiaomi Smart Air Purifier 4",
+    "price": 460,
+    "category": "Home",
+    "description": "The purifier is clean and the fan runs quietly across settings. It offers app control, strong filtration, and a compact design for bedrooms or offices.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Panasonic Rice Cooker 1.8L",
+    "price": 240,
+    "category": "Home",
+    "description": "The cooker is fully functional and the nonstick bowl remains in good shape. It makes consistent rice, has easy controls, and suits regular family meals.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "IKEA RANARP Floor Lamp",
+    "price": 180,
+    "category": "Home",
+    "description": "The lamp is in nice condition and the shade and base look well kept. It provides warm focused lighting, classic styling, and fits neatly beside a sofa or desk.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800"]
+  },
+  {
+    "title": "Ashley Fabric 3 Seater Sofa",
+    "price": 1200,
+    "category": "Home",
+    "description": "The sofa is comfortable and structurally solid with only light fabric wear. It offers deep seating, neutral styling, and works well for a family living room.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Muji Memory Foam Mattress Topper",
+    "price": 260,
+    "category": "Home",
+    "description": "The topper is clean and has been used with a protective cover. It adds noticeable comfort, pressure relief, and a simple upgrade to an existing mattress.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Bosch Compact Dishwasher",
+    "price": 1350,
+    "category": "Home",
+    "description": "The dishwasher is in good working condition and washes efficiently. It has practical compact sizing, reliable cleaning cycles, and low everyday hassle.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Samsung 55 Inch Smart TV",
+    "price": 1490,
+    "category": "Home",
+    "description": "The screen is bright and clear with no visible damage during testing. It includes smart streaming apps, slim modern styling, and strong picture quality for movies.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800"]
+  },
+  {
+    "title": "Nike Adjustable Dumbbell Set",
+    "price": 490,
+    "category": "Sports",
+    "description": "The set is in good condition and the locking mechanism feels secure. It saves space, supports varied workouts, and is ideal for a home gym setup.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Adidas Yoga Mat 6mm",
+    "price": 85,
+    "category": "Sports",
+    "description": "The mat is lightly used and still has strong grip and cushioning. It rolls up easily, feels comfortable under pressure points, and suits stretching or yoga.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Decathlon 20kg Barbell Set",
+    "price": 350,
+    "category": "Sports",
+    "description": "The plates and bar are in solid condition with normal cosmetic wear. It provides a practical starter weight set and works well for strength training at home.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Wilson Evolution Basketball",
+    "price": 120,
+    "category": "Sports",
+    "description": "The ball has been used indoors and still has excellent grip. It offers reliable bounce, soft composite feel, and great control for practice sessions.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1518604666860-9ed391f76460?w=800"]
+  },
+  {
+    "title": "Spalding Street Outdoor Basketball",
+    "price": 75,
+    "category": "Sports",
+    "description": "The ball is in good shape and holds air properly between games. It has durable outdoor rubber, solid grip, and is ready for street court use.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1518604666860-9ed391f76460?w=800"]
+  },
+  {
+    "title": "Yonex Astrox Badminton Racket",
+    "price": 220,
+    "category": "Sports",
+    "description": "The racket frame is clean with no cracks and the grip feels comfortable. It gives quick handling, solid power, and suits regular club play.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=800"]
+  },
+  {
+    "title": "Babolat Pure Drive Tennis Racket",
+    "price": 390,
+    "category": "Sports",
+    "description": "The racket is well kept and recently restrung for immediate use. It delivers strong spin potential, lively response, and a popular balanced feel.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=800"]
+  },
+  {
+    "title": "Nike Mercurial Football Boots",
+    "price": 260,
+    "category": "Sports",
+    "description": "The boots are in very good condition with studs showing normal use only. They feel lightweight, responsive, and built for speed on the pitch.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Adidas Predator Soccer Cleats",
+    "price": 280,
+    "category": "Sports",
+    "description": "Used for a short season and the upper remains in good shape. They offer secure touch, comfortable fit, and good traction for match play.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Fitbit Charge 5 Fitness Tracker",
+    "price": 390,
+    "category": "Sports",
+    "description": "The tracker is in good working order and the screen remains bright and responsive. It features heart rate tracking, activity stats, and a compact comfortable design.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Garmin Forerunner 255 GPS Watch",
+    "price": 990,
+    "category": "Sports",
+    "description": "The watch has been carefully used and still holds charge very well. It offers accurate GPS tracking, training metrics, and strong battery life for runners.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Trek Marlin 5 Mountain Bike",
+    "price": 1950,
+    "category": "Sports",
+    "description": "The bike is mechanically sound and shifts smoothly across gears. It has a sturdy frame, front suspension, and dependable performance on trails or city paths.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800"]
+  },
+  {
+    "title": "Giant Escape 3 City Bike",
+    "price": 1400,
+    "category": "Sports",
+    "description": "The bike is in good overall condition with brakes and gears working properly. It provides a comfortable upright ride, lightweight feel, and practical urban versatility.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800"]
+  },
+  {
+    "title": "Speedo Training Swim Goggles",
+    "price": 70,
+    "category": "Sports",
+    "description": "The goggles are in very good condition and the straps still adjust firmly. They offer a clear anti-fog view, comfortable seal, and easy lap-swim usability.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=800"]
+  },
+  {
+    "title": "Arena Swim Fins",
+    "price": 110,
+    "category": "Sports",
+    "description": "The fins have been lightly used and the foot pockets are clean and intact. They help build kicking strength, improve propulsion, and fit training sessions well.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=800"]
+  },
+  {
+    "title": "Under Armour Training Bench",
+    "price": 520,
+    "category": "Sports",
+    "description": "The bench is sturdy and the padding remains supportive without tears. It works well for presses, dumbbell work, and general strength training at home.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Reebok Kettlebell 16kg",
+    "price": 180,
+    "category": "Sports",
+    "description": "The kettlebell is in solid shape with a comfortable handle grip. It is great for swings, carries, and compact full-body training sessions.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Nike Gym Backpack",
+    "price": 140,
+    "category": "Sports",
+    "description": "The backpack is clean with zippers and straps in good condition. It offers practical compartments, comfortable carry, and easy storage for workout gear.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Adidas Resistance Bands Set",
+    "price": 95,
+    "category": "Sports",
+    "description": "The bands are lightly used and still maintain strong elasticity. They are versatile for warmups, mobility work, and adding resistance to bodyweight exercises.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Everlast Pro Boxing Gloves",
+    "price": 210,
+    "category": "Sports",
+    "description": "The gloves are in good condition with padding that still feels protective. They provide secure wrist support, comfortable fit, and solid value for bag work.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1517438476312-10d79c077509?w=800"]
+  },
+  {
+    "title": "Head Radical Tennis Bag",
+    "price": 160,
+    "category": "Sports",
+    "description": "The bag is tidy and the zippers run smoothly across all sections. It gives enough room for rackets, accessories, and easy transport to the court.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=800"]
+  },
+  {
+    "title": "Decathlon Camping Tent 2 Person",
+    "price": 320,
+    "category": "Sports",
+    "description": "The tent is complete with poles and fabric in good used condition. It is easy to pitch, practical for short trips, and offers dependable weather protection.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800"]
+  },
+  {
+    "title": "Quechua Hiking Backpack 30L",
+    "price": 170,
+    "category": "Sports",
+    "description": "The backpack has been lightly used and the buckles and straps work properly. It provides organized storage, supportive carry, and a practical size for day hikes.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800"]
+  },
+  {
+    "title": "Puma Goalkeeper Gloves",
+    "price": 130,
+    "category": "Sports",
+    "description": "The gloves are in good condition with palm grip still performing well. They offer wrist support, comfortable fit, and dependable control for training or matches.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Canon EOS 90D DSLR Camera",
+    "price": 3290,
+    "category": "Photography",
+    "description": "The camera body is in very good condition and everything functions smoothly. It offers sharp stills, strong autofocus, and solid battery life for serious shooting.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Canon RF 50mm f 1.8 Lens",
+    "price": 690,
+    "category": "Photography",
+    "description": "The lens is clean with clear glass and smooth focus operation. It delivers bright low-light performance, pleasing background blur, and compact everyday usability.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Nikon D750 DSLR Camera",
+    "price": 2890,
+    "category": "Photography",
+    "description": "Well maintained with clean controls and no major cosmetic damage. It features full-frame image quality, reliable handling, and excellent results for portraits or events.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Sony Alpha a6400 Mirrorless Camera",
+    "price": 3150,
+    "category": "Photography",
+    "description": "The body is in excellent shape and the sensor is clean. It provides fast autofocus, compact size, and strong video capabilities for creators.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Sony FE 24-70mm f 4 Lens",
+    "price": 1790,
+    "category": "Photography",
+    "description": "The lens has been kept carefully and the glass looks clear without haze. It offers a versatile zoom range, solid sharpness, and dependable all-purpose performance.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Fujifilm Instax Mini 11 Camera",
+    "price": 290,
+    "category": "Photography",
+    "description": "The camera is in nice condition and works properly with film packs. It gives instant prints, simple controls, and a fun retro shooting experience.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "GoPro HERO11 Black Action Camera",
+    "price": 1190,
+    "category": "Photography",
+    "description": "The unit is clean and all buttons and ports function as expected. It records sharp stabilized footage, handles adventure use well, and is easy to mount.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "DJI Mini 3 Drone",
+    "price": 2290,
+    "category": "Photography",
+    "description": "The drone is in excellent condition and flies steadily without issues. It offers compact portability, strong image quality, and useful intelligent flight modes.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=800"]
+  },
+  {
+    "title": "Manfrotto Befree Tripod",
+    "price": 420,
+    "category": "Photography",
+    "description": "The tripod is in good used condition and all leg locks hold firmly. It is lightweight, travel friendly, and stable enough for cameras or content setups.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=800"]
+  },
+  {
+    "title": "Rode VideoMic Pro Microphone",
+    "price": 620,
+    "category": "Photography",
+    "description": "The microphone is fully functional and the mount remains secure. It improves camera audio noticeably, reduces noise, and is easy to use for video recording.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Godox Softbox Lighting Kit",
+    "price": 540,
+    "category": "Photography",
+    "description": "The kit is complete and in very good condition with clean diffusers. It provides soft flattering light, flexible setup options, and useful output for portraits or products.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=800"]
+  },
+  {
+    "title": "Sigma 16mm f 1.4 Lens",
+    "price": 1250,
+    "category": "Photography",
+    "description": "The lens is clean and focuses accurately with smooth rings. It is excellent for wide shots, low-light scenes, and crisp video content.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Tamron 70-300mm Zoom Lens",
+    "price": 1380,
+    "category": "Photography",
+    "description": "The lens shows light cosmetic wear but the optics remain clear. It gives useful reach, solid image quality, and flexible performance for outdoor subjects.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Canon Speedlite 430EX III Flash",
+    "price": 720,
+    "category": "Photography",
+    "description": "The flash is in good condition and fires consistently across settings. It offers reliable bounce flash, quick recycle times, and practical event photography support.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Nikon 50mm f 1.8 Prime Lens",
+    "price": 520,
+    "category": "Photography",
+    "description": "The lens has clean glass and a tidy barrel with smooth focus. It delivers sharp portraits, bright aperture performance, and excellent value for everyday photography.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Sony ZV-E10 Vlogging Camera",
+    "price": 2480,
+    "category": "Photography",
+    "description": "The camera is very clean and fully operational with responsive controls. It has creator-friendly autofocus, flip screen design, and strong video quality for vlogs.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Polaroid Now Instant Camera",
+    "price": 360,
+    "category": "Photography",
+    "description": "The camera is in good used condition and works properly with film. It provides instant analog prints, simple controls, and a nostalgic shooting style.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Peak Design Everyday Sling 6L",
+    "price": 340,
+    "category": "Photography",
+    "description": "The bag is well kept and the zippers and dividers remain in great shape. It offers compact carry, smart organization, and quick access for camera gear.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Lowepro Camera Backpack 450",
+    "price": 430,
+    "category": "Photography",
+    "description": "The backpack is clean and the padding is still supportive. It features large gear capacity, protective compartments, and comfortable carry for shoots or travel.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Elgato Key Light Air",
+    "price": 490,
+    "category": "Photography",
+    "description": "The light is in excellent working order and the controls respond smoothly. It gives soft adjustable illumination, app control, and a neat desk-friendly form.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=800"]
+  },
+  {
+    "title": "DJI Osmo Mobile 6 Gimbal",
+    "price": 520,
+    "category": "Photography",
+    "description": "The gimbal is in very good condition and balances phones properly. It offers smooth stabilization, easy folding design, and useful creator shooting modes.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Benro Travel Tripod",
+    "price": 310,
+    "category": "Photography",
+    "description": "The tripod is lightweight and all sections lock firmly in place. It packs down easily, supports travel photography, and gives stable framing on the go.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=800"]
+  },
+  {
+    "title": "SanDisk Extreme Pro 128GB SD Card",
+    "price": 95,
+    "category": "Photography",
+    "description": "The card is lightly used and has been formatted and tested. It offers fast read and write speeds, reliable storage, and works well for photo or video capture.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Neewer LED Panel Light",
+    "price": 260,
+    "category": "Photography",
+    "description": "The panel is in good condition and brightness adjustment works correctly. It provides even lighting, easy setup, and useful output for portraits or video work.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=800"]
+  },
+  {
+    "title": "Apple iPhone 14 128GB",
+    "price": 2690,
+    "category": "Electronics",
+    "description": "The phone is clean and has only very light cosmetic wear on the frame. It offers strong battery life, smooth iOS performance, and a bright high-quality display.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800"]
+  },
+  {
+    "title": "Samsung Galaxy A54 128GB",
+    "price": 1290,
+    "category": "Electronics",
+    "description": "This device is in very good condition with no functional issues. It has a vibrant AMOLED screen, reliable cameras, and solid value for everyday use.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800"]
+  },
+  {
+    "title": "Lenovo IdeaPad 5 15 Inch",
+    "price": 1890,
+    "category": "Electronics",
+    "description": "Used mainly for study and the keyboard and screen remain in nice shape. It includes a comfortable typing experience, fast SSD storage, and dependable daily performance.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=800"]
+  },
+  {
+    "title": "HP Envy 13 Ultrabook",
+    "price": 2090,
+    "category": "Electronics",
+    "description": "The laptop is well maintained and the battery still performs properly. It has a sleek build, sharp display, and enough power for office work or browsing.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=800"]
+  },
+  {
+    "title": "Bose QuietComfort 45 Headphones",
+    "price": 890,
+    "category": "Electronics",
+    "description": "The headphones are clean and comfortable with strong battery life left. They feature effective noise cancelling, balanced sound, and easy Bluetooth pairing.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800"]
+  },
+  {
+    "title": "Xiaomi Redmi Note 12 Pro",
+    "price": 1150,
+    "category": "Electronics",
+    "description": "The screen and back panel are in very good condition with no cracks. It delivers fast charging, a smooth display, and excellent value for daily tasks.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800"]
+  },
+  {
+    "title": "Levi's 512 Slim Taper Jeans",
+    "price": 170,
+    "category": "Fashion",
+    "description": "The jeans are in great shape with no stains and minimal fading. They offer a modern slim taper fit, sturdy denim, and easy everyday styling.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Nike Court Vision Low Sneakers",
+    "price": 210,
+    "category": "Fashion",
+    "description": "The pair is lightly worn and the upper remains clean and structured. They have a classic low-top design, comfortable cushioning, and a simple streetwear look.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"]
+  },
+  {
+    "title": "Adidas Originals Trefoil Hoodie",
+    "price": 190,
+    "category": "Fashion",
+    "description": "The hoodie is soft and well kept with no major pilling. It has a relaxed fit, cozy fleece interior, and an easy casual style.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Zara Leather Crossbody Bag",
+    "price": 150,
+    "category": "Fashion",
+    "description": "The bag is in good condition with only small marks near the hardware. It offers a clean compact shape, adjustable strap, and practical daily storage.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800"]
+  },
+  {
+    "title": "Puma Essentials Zip Hoodie",
+    "price": 140,
+    "category": "Fashion",
+    "description": "This hoodie is tidy and has been worn only a few times. It feels comfortable, layers easily, and has a simple sporty fit.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800"]
+  },
+  {
+    "title": "Ray-Ban Clubmaster Sunglasses",
+    "price": 340,
+    "category": "Fashion",
+    "description": "The frames and hinges are in very good condition with clear lenses. They offer a timeless semi-rimmed design, premium feel, and reliable sun protection.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=800"]
+  },
+  {
+    "title": "IKEA LACK Side Table",
+    "price": 70,
+    "category": "Home",
+    "description": "The table is sturdy and clean with only tiny surface marks. It has a compact lightweight design and works well beside a bed or sofa.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Philips Electric Kettle 1.7L",
+    "price": 95,
+    "category": "Home",
+    "description": "The kettle is in good working condition and boils water quickly. It features a practical size, simple controls, and reliable everyday use.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Toshiba Mini Toaster Oven",
+    "price": 180,
+    "category": "Home",
+    "description": "This oven is clean inside and heats evenly without issues. It has a compact countertop design, adjustable settings, and is handy for quick meals.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "Muji Wooden Wall Shelf",
+    "price": 110,
+    "category": "Home",
+    "description": "The shelf is in excellent condition and the wood finish still looks fresh. It has a simple minimalist design, sturdy support, and easy wall styling.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Dyson Cool Tower Fan",
+    "price": 890,
+    "category": "Home",
+    "description": "The fan is fully functional and runs smoothly at all speeds. It has a sleek bladeless design, quiet operation, and strong airflow for home use.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800"]
+  },
+  {
+    "title": "West Elm Dining Chair Set",
+    "price": 780,
+    "category": "Home",
+    "description": "The chairs are sturdy and the upholstery remains clean and neat. They offer modern styling, comfortable seating, and work well around a dining table.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800"]
+  },
+  {
+    "title": "Adidas Foam Roller",
+    "price": 80,
+    "category": "Sports",
+    "description": "The roller is in very good condition and keeps its shape well. It is useful for recovery, mobility work, and post-workout muscle relief.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Nike Running Hydration Belt",
+    "price": 75,
+    "category": "Sports",
+    "description": "The belt is lightly used and all buckles and zips work properly. It gives a secure fit, easy bottle access, and practical storage for outdoor runs.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Decathlon Pull-Up Bar",
+    "price": 120,
+    "category": "Sports",
+    "description": "The bar is sturdy and the grips are still in good shape. It offers a simple home workout option, easy setup, and dependable bodyweight training support.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800"]
+  },
+  {
+    "title": "Wilson Pro Staff Tennis Racket",
+    "price": 450,
+    "category": "Sports",
+    "description": "The racket is in strong condition and has a fresh overgrip installed. It provides solid control, a classic feel, and dependable court performance.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=800"]
+  },
+  {
+    "title": "Garmin Edge Cycling Computer",
+    "price": 690,
+    "category": "Sports",
+    "description": "The device is well maintained and the screen remains clear and responsive. It offers ride tracking, navigation support, and useful stats for cyclists.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800"]
+  },
+  {
+    "title": "Speedo Kickboard Training Float",
+    "price": 55,
+    "category": "Sports",
+    "description": "The board is in good used condition with no major dents or cracks. It helps isolate kick work, improves swim drills, and is easy to carry to the pool.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=800"]
+  },
+  {
+    "title": "Canon EOS R50 Mirrorless Camera",
+    "price": 2890,
+    "category": "Photography",
+    "description": "The camera is in excellent condition and has been used carefully indoors. It offers sharp image quality, quick autofocus, and a lightweight body for creators.",
+    "location": "Jerusalem",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Sony 85mm f 1.8 Portrait Lens",
+    "price": 1490,
+    "category": "Photography",
+    "description": "The lens glass is clean and the autofocus performs correctly. It delivers pleasing subject separation, sharp portraits, and strong low-light capability.",
+    "location": "Tel Aviv",
+    "image_url": ["https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800"]
+  },
+  {
+    "title": "Nikon Z30 Vlogging Camera",
+    "price": 2390,
+    "category": "Photography",
+    "description": "The camera is tidy and fully functional with responsive controls. It features a creator-friendly screen, solid video quality, and compact everyday usability.",
+    "location": "Haifa",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Manfrotto Compact Light Stand",
+    "price": 160,
+    "category": "Photography",
+    "description": "The stand is in very good condition and locks securely in place. It offers lightweight portability, quick setup, and practical support for lights or modifiers.",
+    "location": "Ashdod",
+    "image_url": ["https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=800"]
+  },
+  {
+    "title": "DJI RS 3 Mini Gimbal",
+    "price": 1290,
+    "category": "Photography",
+    "description": "The gimbal is clean and balances compact cameras properly. It provides smooth stabilization, a travel-friendly size, and helpful shooting modes for video creators.",
+    "location": "Netanya",
+    "image_url": ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"]
+  },
+  {
+    "title": "Godox LED Video Light Panel",
+    "price": 340,
+    "category": "Photography",
+    "description": "The light panel is in solid condition and brightness controls work perfectly. It gives even illumination, flexible setup options, and useful output for shoots or streams.",
+    "location": "Beersheba",
+    "image_url": ["https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=800"]
+  }
+]

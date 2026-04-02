@@ -5,6 +5,8 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  RefreshControl // <-- Added RefreshControl here
+  ,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -16,8 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ListingCard from '../../../src/features/listings/components/ListingCard';
 
 // Firebase Imports
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import { db } from '../../../src/lib/firebase';
+import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { auth, db } from '../../../src/lib/firebase';
 
 // Your Mock Data
 const FEATURED_LISTINGS = [
@@ -52,12 +54,53 @@ export default function HomeScreen() {
   
   // Real Firebase State
   const [realListings, setRealListings] = useState<any[]>([]);
+  const [recommendedListings, setRecommendedListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // <-- Added refreshing state
+  const [refreshing, setRefreshing] = useState(false); 
 
-  // Fetch Real Items from Firebase
+  // <-- Extracted algorithm fetcher so we can call it on refresh
+  const fetchRecommendations = async () => {
+    try {
+      let topKeywords: string[] = [];
+      if (auth.currentUser) {
+        const userSnap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        if (userSnap.exists() && userSnap.data().keyword_scores) {
+          const scores = userSnap.data().keyword_scores;
+          // Sort the user's secret scoreboard to find their top 3 words
+          topKeywords = Object.keys(scores).sort((a, b) => scores[b] - scores[a]).slice(0, 3);
+        }
+      }
+
+      if (topKeywords.length > 0) {
+        // Find listings that match their favorite words
+        const recQuery = query(
+          collection(db, 'listings'), 
+          where('search_terms', 'array-contains-any', topKeywords), 
+          limit(10)
+        );
+        const recSnap = await getDocs(recQuery);
+        setRecommendedListings(recSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+    }
+  };
+
+  // <-- The actual Refresh function
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchRecommendations(); // Re-run the algorithm
+    setRefreshing(false);
+  };
+
   useEffect(() => {
-    const q = query(collection(db, 'listings'), orderBy('created_at', 'desc'));
+    // Run algorithm once on initial load
+    fetchRecommendations();
 
+    // STANDARD FEED: Fetch Recent Items (Real-time listener)
+    const q = query(collection(db, 'listings'), orderBy('created_at', 'desc'), limit(30));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedListings = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -173,9 +216,34 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
+      {/* ---------------------------------------------------- */}
+      {/* ALGORITHM UI: "For You" Section                      */}
+      {/* ---------------------------------------------------- */}
+      {recommendedListings.length > 0 && (
+        <View className="mb-8">
+          <View className="px-5">
+            <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-4 flex-row items-center">
+              For You ✨
+            </Text>
+          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+          >
+            {recommendedListings.map((item) => (
+              <View key={`rec-${item.id}`} className="w-48 mr-4">
+                <ListingCard item={item} />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Recent Finds Header */}
       <View className="px-5">
         <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-4">
-          Recent Finds (Real Data)
+          Recent Finds
         </Text>
       </View>
     </View>
@@ -213,7 +281,22 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => <ListingCard item={item} />}
+          
+          // <-- Added the RefreshControl prop here
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor="#0F766E" 
+              colors={['#0F766E']} 
+            />
+          }
+
+          renderItem={({ item }) => (
+            <View className="flex-1 px-2">
+              <ListingCard item={item} />
+            </View>
+          )}
           ListEmptyComponent={
             <View className="items-center justify-center mt-10 px-5">
               <Ionicons name="cube-outline" size={64} color="#E2E8F0" />
