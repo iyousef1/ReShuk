@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { startOrGetChat } from '../../../src/features/chat/api';
 
 // Firebase Imports (Added updateDoc, increment, setDoc for the algorithm)
-import { doc, getDoc, increment, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
 const { width } = Dimensions.get('window');
@@ -44,26 +44,36 @@ export default function ListingDetailScreen() {
           setListing({ id: docSnap.id, ...itemData });
 
           // ---------------------------------------------------------
-          // ALGORITHM PHASE 2: THE TRACKER
+          // ALGORITHM: TRACKER
           // ---------------------------------------------------------
           if (auth.currentUser && itemData.search_terms) {
-            const userRef = doc(db, 'users', auth.currentUser.uid);
-            
-            // Build an object that gives +1 to every word in the array
-            const keywordUpdates: any = {};
+            const userRef = doc(db, 'profiles', auth.currentUser.uid);
+
+            const updates: Record<string, any> = {
+              keyword_scores_updated_at: serverTimestamp(),
+            };
+
+            // +1 per keyword view
             itemData.search_terms.forEach((word: string) => {
-              keywordUpdates[`keyword_scores.${word}`] = increment(1);
+              updates[`keyword_scores.${word}`] = increment(1);
             });
 
+            // +2 for category (stronger signal than individual words)
+            if (itemData.category) {
+              updates[`category_scores.${itemData.category}`] = increment(2);
+            }
+
             try {
-              await updateDoc(userRef, keywordUpdates);
-            } catch (err) {
-              // If the user document doesn't exist yet, create it
-              const initialScores: any = {};
-              itemData.search_terms.forEach((word: string) => {
-                initialScores[word] = 1;
-              });
-              await setDoc(userRef, { keyword_scores: initialScores }, { merge: true });
+              await updateDoc(userRef, updates);
+            } catch {
+              // Document doesn't exist yet — create it
+              const initialKeywords: Record<string, number> = {};
+              itemData.search_terms.forEach((word: string) => { initialKeywords[word] = 1; });
+              await setDoc(userRef, {
+                keyword_scores: initialKeywords,
+                keyword_scores_updated_at: serverTimestamp(),
+                ...(itemData.category ? { category_scores: { [itemData.category]: 2 } } : {}),
+              }, { merge: true });
             }
           }
           // ---------------------------------------------------------

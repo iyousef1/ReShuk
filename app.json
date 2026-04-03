@@ -10,7 +10,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yousef1200.ReShuk"
+      "bundleIdentifier": "com.yousef1200.ReShuk",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "ReShuk uses your location to suggest safe public meeting spots when arranging item exchanges.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +24,12 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.yousef1200.ReShuk"
     },
     "web": {
       "bundler": "metro",
@@ -43,7 +52,13 @@
       ],
       "expo-font",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "ReShuk uses your location to suggest safe public meeting spots when arranging item exchanges."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

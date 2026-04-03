@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
+import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,81 +14,176 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Your Architecture Imports
-import { sendMessage } from '../../../src/features/chat/api';
+import { saveMeetSuggestions, sendMeetRequest, sendMessage } from '../../../src/features/chat/api';
 import ChatBubble from '../../../src/features/chat/components/ChatBubble';
+import MeetRequestCard from '../../../src/features/chat/components/MeetRequestCard';
+import MeetSuggestionsCard from '../../../src/features/chat/components/MeetSuggestionsCard';
+import { getMeetingSuggestions } from '../../../src/lib/places';
 
-// Firebase Imports
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
+
+type ChatMessage = {
+  id: string;
+  type?: 'text' | 'meet_request' | 'meet_suggestions';
+  text: string;
+  senderId: string;
+  createdAt: Date;
+  location?: { lat: number; lng: number };
+  resolved?: boolean;
+  suggestions?: { name: string; type: string; address: string; reason: string }[];
+};
 
 export default function ChatRoomScreen() {
   const { chatId } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  
+
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [otherUserName, setOtherUserName] = useState('');
+  const [loadingMeet, setLoadingMeet] = useState(false);
+  // Track which meet request cards are currently loading suggestions
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
-  // 1. Real-Time Listener for Messages
+  // Fetch other user's name
+  useEffect(() => {
+    const fetchOtherUser = async () => {
+      if (!chatId || !auth.currentUser) return;
+      const chatSnap = await getDoc(doc(db, 'chats', chatId as string));
+      if (!chatSnap.exists()) return;
+      const { buyerId, sellerId } = chatSnap.data();
+      const otherId = auth.currentUser.uid === buyerId ? sellerId : buyerId;
+      const profileSnap = await getDoc(doc(db, 'profiles', otherId));
+      if (profileSnap.exists()) setOtherUserName(profileSnap.data().full_name ?? '');
+    };
+    fetchOtherUser();
+  }, [chatId]);
+
+  // Real-time message listener
   useEffect(() => {
     if (!chatId) return;
 
-    // Point exactly to this chat room's "messages" subcollection
-    const messagesRef = collection(db, `chats/${chatId}/messages`);
-    
-    // Order them by time (descending because our FlatList is inverted!)
-    const q = query(messagesRef, orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, `chats/${chatId}/messages`),
+      orderBy('createdAt', 'desc')
+    );
 
-    // onSnapshot listens for live updates. Any time a message is sent, this runs instantly.
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedMessages = snapshot.docs.map(doc => {
-        const data = doc.data();
+      const fetched: ChatMessage[] = snapshot.docs.map(d => {
+        const data = d.data();
         return {
-          id: doc.id,
+          id: d.id,
+          type: data.type ?? 'text',
           text: data.text,
           senderId: data.senderId,
-          // Safely handle Firebase timestamps (they are null for a split second while uploading)
-          createdAt: data.createdAt?.toDate() || new Date(), 
+          createdAt: data.createdAt?.toDate() ?? new Date(),
+          location: data.location,
+          resolved: data.resolved,
+          suggestions: data.suggestions,
         };
       });
-      
-      setMessages(fetchedMessages);
+      setMessages(fetched);
       setLoading(false);
     }, (error) => {
       console.error("Error listening to messages:", error);
       setLoading(false);
     });
 
-    // Cleanup the listener when the user leaves the screen
     return () => unsubscribe();
   }, [chatId]);
 
-  // 2. Send Message Logic
   const handleSend = async () => {
     const textToSend = inputText.trim();
     if (!textToSend || !chatId) return;
-    
+
     setIsSending(true);
-    // Optimistically clear the input so the UI feels fast
-    setInputText(''); 
+    setInputText('');
 
     try {
       await sendMessage(chatId as string, textToSend);
-    } catch (error: any) {
+    } catch {
       Alert.alert("Error", "Could not send message.");
-      console.error(error);
-      // Put the text back if it failed
-      setInputText(textToSend); 
+      setInputText(textToSend);
     } finally {
       setIsSending(false);
     }
   };
 
-  // Helper to format the time for the chat bubble
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const handleMeetUp = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location access is needed to suggest meeting spots.');
+      return;
+    }
+
+    setLoadingMeet(true);
+    try {
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      await sendMeetRequest(chatId as string, {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      });
+    } catch {
+      Alert.alert('Error', 'Could not get your location. Please try again.');
+    } finally {
+      setLoadingMeet(false);
+    }
+  };
+
+  const handleShareLocation = async (meetRequestMsg: ChatMessage) => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location access is needed to suggest meeting spots.');
+      return;
+    }
+
+    setResolvingId(meetRequestMsg.id);
+    try {
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const myLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const theirLocation = meetRequestMsg.location!;
+
+      const suggestions = await getMeetingSuggestions(theirLocation, myLocation);
+      await saveMeetSuggestions(chatId as string, meetRequestMsg.id, suggestions);
+    } catch (e: any) {
+      console.error('Meet suggestion error:', e?.message ?? e);
+      Alert.alert('Error', e?.message ?? 'Could not generate meeting suggestions. Please try again.');
+    } finally {
+      setResolvingId(null);
+    }
+  };
+
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const renderMessage = ({ item }: { item: ChatMessage }) => {
+    const isOwn = item.senderId === auth.currentUser?.uid;
+
+    if (item.type === 'meet_request') {
+      return (
+        <MeetRequestCard
+          senderName={otherUserName || 'The other user'}
+          isOwnMessage={isOwn}
+          onShareLocation={() => handleShareLocation(item)}
+          isLoading={resolvingId === item.id}
+          resolved={item.resolved ?? false}
+        />
+      );
+    }
+
+    if (item.type === 'meet_suggestions') {
+      return <MeetSuggestionsCard suggestions={item.suggestions ?? []} />;
+    }
+
+    return (
+      <ChatBubble
+        message={item.text}
+        isOwnMessage={isOwn}
+        timestamp={formatTime(item.createdAt)}
+      />
+    );
   };
 
   if (loading) {
@@ -99,37 +195,39 @@ export default function ChatRoomScreen() {
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} 
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       className="bg-surface-light dark:bg-surface-dark"
     >
-      {/* The Chat Feed */}
       <FlatList
         data={messages}
-        inverted // Pins items to the bottom, newest first!
+        inverted
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: 16 }}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          const isOwnMessage = item.senderId === auth.currentUser?.uid;
-          
-          return (
-            <ChatBubble 
-              message={item.text} 
-              isOwnMessage={isOwnMessage} 
-              timestamp={formatTime(item.createdAt)} 
-            />
-          );
-        }}
+        renderItem={renderMessage}
       />
 
-      {/* The Input Bar */}
-      <View 
+      {/* Input Bar */}
+      <View
         className="px-4 py-3 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 flex-row items-end"
         style={{ paddingBottom: Math.max(insets.bottom, 12) }}
       >
+        {/* Meet Up Button */}
+        <TouchableOpacity
+          onPress={handleMeetUp}
+          disabled={loadingMeet}
+          className="w-12 h-12 rounded-full bg-brand-primary/10 items-center justify-center mr-2"
+        >
+          {loadingMeet ? (
+            <ActivityIndicator size="small" color="#0F766E" />
+          ) : (
+            <Ionicons name="location-outline" size={22} color="#0F766E" />
+          )}
+        </TouchableOpacity>
+
         <View className="flex-1 bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-3xl flex-row items-center px-4 min-h-[48px] max-h-32">
           <TextInput
             value={inputText}
@@ -142,7 +240,7 @@ export default function ChatRoomScreen() {
         </View>
 
         {/* Send Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleSend}
           disabled={!inputText.trim() || isSending}
           className={`ml-3 w-12 h-12 rounded-full items-center justify-center ${
@@ -152,11 +250,11 @@ export default function ChatRoomScreen() {
           {isSending ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Ionicons 
-              name="send" 
-              size={20} 
-              color={inputText.trim() ? '#FFFFFF' : '#94A3B8'} 
-              style={{ marginLeft: 4 }} 
+            <Ionicons
+              name="send"
+              size={20}
+              color={inputText.trim() ? '#FFFFFF' : '#94A3B8'}
+              style={{ marginLeft: 4 }}
             />
           )}
         </TouchableOpacity>

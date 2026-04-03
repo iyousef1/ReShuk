@@ -62,10 +62,53 @@ export const getMessages = async (chatId: string) => {
 // Send a message within a specific chat
 export const sendMessage = async (chatId: string, text: string) => {
   if (!auth.currentUser) throw new Error("Must be logged in");
-  
+
   await addDoc(collection(db, `chats/${chatId}/messages`), {
     text,
     senderId: auth.currentUser.uid,
+    createdAt: serverTimestamp(),
+  });
+};
+
+// Send a meet-up request with the requester's location
+export const sendMeetRequest = async (
+  chatId: string,
+  location: { lat: number; lng: number }
+) => {
+  if (!auth.currentUser) throw new Error("Must be logged in");
+
+  await addDoc(collection(db, `chats/${chatId}/messages`), {
+    type: 'meet_request',
+    text: '📍 Meet Up Request',
+    senderId: auth.currentUser.uid,
+    location,
+    resolved: false,
+    createdAt: serverTimestamp(),
+  });
+};
+
+// Save AI meeting suggestions as a message visible to both users
+export const saveMeetSuggestions = async (
+  chatId: string,
+  meetRequestId: string,
+  suggestions: { name: string; type: string; address: string; reason: string }[]
+) => {
+  if (!auth.currentUser) throw new Error("Must be logged in");
+
+  // Mark the original request as resolved
+  const { updateDoc, doc: firestoreDoc } = await import('firebase/firestore');
+  const { db: firestoreDb } = await import('../../lib/firebase');
+  await updateDoc(
+    firestoreDoc(firestoreDb, `chats/${chatId}/messages/${meetRequestId}`),
+    { resolved: true }
+  );
+
+  // Post the suggestions as a new message
+  await addDoc(collection(db, `chats/${chatId}/messages`), {
+    type: 'meet_suggestions',
+    text: 'AI Meeting Suggestions',
+    senderId: auth.currentUser.uid,
+    suggestions,
     createdAt: serverTimestamp(),
   });
 };

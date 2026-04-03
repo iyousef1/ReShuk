@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ListingCard from '../../../src/features/listings/components/ListingCard';
 
 // Firebase Imports
-import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { Timestamp, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
 // Your Mock Data
@@ -63,26 +63,64 @@ export default function HomeScreen() {
   // <-- Extracted algorithm fetcher so we can call it on refresh
   const fetchRecommendations = async () => {
     try {
-      let topKeywords: string[] = [];
-      if (auth.currentUser) {
-        const userSnap = await getDoc(doc(db, 'users', auth.currentUser.uid));
-        if (userSnap.exists() && userSnap.data().keyword_scores) {
-          const scores = userSnap.data().keyword_scores;
-          // Sort the user's secret scoreboard to find their top 3 words
-          topKeywords = Object.keys(scores).sort((a, b) => scores[b] - scores[a]).slice(0, 3);
-        }
+      if (!auth.currentUser) return;
+      const uid = auth.currentUser.uid;
+
+      const userSnap = await getDoc(doc(db, 'profiles', uid));
+      if (!userSnap.exists()) return;
+
+      const data = userSnap.data();
+      const keywordScores: Record<string, number> = data.keyword_scores ?? {};
+      const categoryScores: Record<string, number> = data.category_scores ?? {};
+      const lastUpdated: Timestamp | null = data.keyword_scores_updated_at ?? null;
+
+      // Apply time decay: scores lose 5% of value per day so old interests fade out
+      const decayFactor = lastUpdated
+        ? Math.pow(0.95, (Date.now() - lastUpdated.toMillis()) / 86_400_000)
+        : 1;
+
+      const decayed = Object.fromEntries(
+        Object.entries(keywordScores).map(([k, v]) => [k, v * decayFactor])
+      );
+
+      const topKeywords = Object.keys(decayed)
+        .sort((a, b) => decayed[b] - decayed[a])
+        .slice(0, 5);
+
+      const topCategories = Object.keys(categoryScores)
+        .sort((a, b) => categoryScores[b] - categoryScores[a])
+        .slice(0, 2);
+
+      if (topKeywords.length === 0 && topCategories.length === 0) return;
+
+      const seen = new Set<string>();
+      const results: any[] = [];
+
+      // Query by top keywords
+      if (topKeywords.length > 0) {
+        const snap = await getDocs(query(
+          collection(db, 'listings'),
+          where('search_terms', 'array-contains-any', topKeywords),
+          limit(15)
+        ));
+        snap.docs
+          .filter(d => d.data().seller_id !== uid)
+          .forEach(d => { if (!seen.has(d.id)) { seen.add(d.id); results.push({ id: d.id, ...d.data() }); } });
       }
 
-      if (topKeywords.length > 0) {
-        // Find listings that match their favorite words
-        const recQuery = query(
-          collection(db, 'listings'), 
-          where('search_terms', 'array-contains-any', topKeywords), 
+      // Query by top categories to fill in gaps
+      if (topCategories.length > 0) {
+        const snap = await getDocs(query(
+          collection(db, 'listings'),
+          where('category', 'in', topCategories),
           limit(10)
-        );
-        const recSnap = await getDocs(recQuery);
-        setRecommendedListings(recSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        ));
+        snap.docs
+          .filter(d => d.data().seller_id !== uid)
+          .forEach(d => { if (!seen.has(d.id)) { seen.add(d.id); results.push({ id: d.id, ...d.data() }); } });
       }
+
+      setRecommendedListings(results);
     } catch (error) {
       console.error("Error fetching recommendations:", error);
     }
