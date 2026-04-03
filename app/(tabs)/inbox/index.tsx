@@ -10,84 +10,108 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Firebase Imports
-import { collection, getDocs, or, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, or, query, where } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
+
+type Chat = {
+  id: string;
+  buyerId: string;
+  sellerId: string;
+  listingId: string;
+  lastMessage: string;
+  lastMessageTime: any;
+  otherUserName: string;
+};
 
 export default function InboxListScreen() {
   const router = useRouter();
-  const [chats, setChats] = useState<any[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchChats = async () => {
-      if (!auth.currentUser) {
-        setLoading(false);
-        return;
-      }
+    if (!auth.currentUser) {
+      setLoading(false);
+      return;
+    }
 
-      const uid = auth.currentUser.uid;
+    const uid = auth.currentUser.uid;
+    const chatsRef = collection(db, 'chats');
+    const q = query(
+      chatsRef,
+      or(
+        where('buyerId', '==', uid),
+        where('sellerId', '==', uid)
+      )
+    );
 
-      try {
-        // Fetch chats where the user is EITHER the buyer OR the seller
-        const chatsRef = collection(db, 'chats');
-        const q = query(
-          chatsRef,
-          or(
-            where('buyerId', '==', uid),
-            where('sellerId', '==', uid)
-          ),
-          // orderBy('lastMessageTime', 'desc') // <-- We will enable this once you send your first message!
-        );
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const rawChats = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
 
-        const snapshot = await getDocs(q);
-        const fetchedChats = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+      // Collect unique other-user IDs
+      const otherIds = [...new Set(rawChats.map((c: any) =>
+        c.buyerId === uid ? c.sellerId : c.buyerId
+      ))] as string[];
 
-        setChats(fetchedChats);
-      } catch (error) {
-        console.error("Error fetching chats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Batch-fetch their names
+      const nameMap: Record<string, string> = {};
+      await Promise.all(
+        otherIds.map(async (otherId) => {
+          try {
+            const profileSnap = await getDoc(doc(db, 'profiles', otherId));
+            nameMap[otherId] = profileSnap.exists()
+              ? profileSnap.data().full_name ?? 'Unknown'
+              : 'Unknown';
+          } catch {
+            nameMap[otherId] = 'Unknown';
+          }
+        })
+      );
 
-    fetchChats();
+      const enriched: Chat[] = rawChats
+        .map((c: any) => {
+          const otherId = c.buyerId === uid ? c.sellerId : c.buyerId;
+          return { ...c, otherUserName: nameMap[otherId] ?? 'Unknown' };
+        })
+        .sort((a: Chat, b: Chat) => {
+          const aTime = a.lastMessageTime?.toMillis?.() ?? 0;
+          const bTime = b.lastMessageTime?.toMillis?.() ?? 0;
+          return bTime - aTime;
+        });
+
+      setChats(enriched);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error listening to chats:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // What each chat row looks like
-  const renderChatRow = ({ item }: { item: any }) => {
-    // Determine if we are talking to the buyer or the seller
-    const isBuyer = item.buyerId === auth.currentUser?.uid;
-    const otherUserId = isBuyer ? item.sellerId : item.buyerId;
+  const renderChatRow = ({ item }: { item: Chat }) => (
+    <TouchableOpacity
+      onPress={() => router.push(`/(tabs)/inbox/${item.id}`)}
+      className="flex-row items-center px-5 py-4 bg-surface-light dark:bg-surface-dark border-b border-slate-100 dark:border-slate-800"
+    >
+      <View className="w-14 h-14 bg-brand-primary/10 rounded-full items-center justify-center mr-4">
+        <Ionicons name="person" size={24} color="#0F766E" />
+      </View>
 
-    return (
-      <TouchableOpacity 
-        onPress={() => router.push(`/(tabs)/inbox/${item.id}`)}
-        className="flex-row items-center px-5 py-4 bg-surface-light dark:bg-surface-dark border-b border-slate-100 dark:border-slate-800"
-      >
-        <View className="w-14 h-14 bg-brand-primary/10 rounded-full items-center justify-center mr-4">
-          <Ionicons name="person" size={24} color="#0F766E" />
-        </View>
-        
-        <View className="flex-1">
-          <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-1">
-            User {otherUserId.substring(0, 5)}... {/* We will replace this with their real name later! */}
-          </Text>
-          <Text 
-            className="text-text-muted dark:text-text-darkMuted" 
-            numberOfLines={1}
-          >
-            {item.lastMessage || 'Tap to start chatting'}
-          </Text>
-        </View>
+      <View className="flex-1">
+        <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-1">
+          {item.otherUserName}
+        </Text>
+        <Text
+          className="text-text-muted dark:text-text-darkMuted"
+          numberOfLines={1}
+        >
+          {item.lastMessage || 'Tap to start chatting'}
+        </Text>
+      </View>
 
-        <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-      </TouchableOpacity>
-    );
-  };
+      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+    </TouchableOpacity>
+  );
 
   if (loading) {
     return (

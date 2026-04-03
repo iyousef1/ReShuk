@@ -3,6 +3,7 @@ import {
   addDoc,
   collection,
   getDocs,
+  orderBy,
   query,
   serverTimestamp,
   where
@@ -40,6 +41,22 @@ export const startOrGetChat = async (listingId: string, sellerId: string) => {
   });
 
   return newChatRef.id;
+};
+
+// Get all messages for a chat, ordered by time
+export const getMessages = async (chatId: string) => {
+  const q = query(
+    collection(db, `chats/${chatId}/messages`),
+    orderBy('createdAt', 'asc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    chatId,
+    senderId: doc.data().senderId,
+    text: doc.data().text,
+    createdAt: doc.data().createdAt?.toDate().toISOString() ?? new Date().toISOString(),
+  }));
 };
 
 // Send a message within a specific chat
