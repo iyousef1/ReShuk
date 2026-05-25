@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ListingCard from '../../../src/features/listings/components/ListingCard';
 
 // Firebase Imports
-import { Timestamp, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { Timestamp, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
 // Your Mock Data
@@ -52,13 +52,92 @@ const FEATURED_LISTINGS = [
 export default function HomeScreen() {
   const router = useRouter();
   
-  // Real Firebase State
   const [realListings, setRealListings] = useState<any[]>([]);
   const [recommendedListings, setRecommendedListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // <-- Added refreshing state
-  const [refreshing, setRefreshing] = useState(false); 
+  const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Subscribe to unread notification count
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    const unsub = onSnapshot(
+      query(collection(db, 'profiles', uid, 'notifications'), where('read', '==', false)),
+      (snap) => setUnreadCount(snap.size)
+    );
+    return () => unsub();
+  }, []);
+
+  const checkNotifications = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    try {
+      // 1. Price drops — compare saved price vs current listing price
+      const savedSnap = await getDocs(collection(db, 'profiles', uid, 'saved'));
+      for (const savedDoc of savedSnap.docs.slice(0, 20)) {
+        const saved = savedDoc.data();
+        const listingSnap = await getDoc(doc(db, 'listings', savedDoc.id));
+        if (!listingSnap.exists()) continue;
+        const listing = listingSnap.data();
+        if (Number(listing.price) < Number(saved.price)) {
+          await setDoc(doc(db, 'profiles', uid, 'notifications', `price_drop_${savedDoc.id}`), {
+            type: 'price_drop',
+            title: 'Price Drop!',
+            body: `"${listing.title}" dropped from $${saved.price} to $${listing.price}`,
+            listingId: savedDoc.id,
+            imageUrl: Array.isArray(listing.image_url) ? listing.image_url[0] : listing.image_url ?? null,
+            read: false,
+            created_at: serverTimestamp(),
+          });
+        }
+      }
+
+      // 2. Wanted matches — check new wanted posts against user's own listings
+      const myListingsSnap = await getDocs(
+        query(collection(db, 'listings'), where('seller_id', '==', uid))
+      );
+      const myListings = myListingsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+
+      if (myListings.length > 0) {
+        const wantedSnap = await getDocs(
+          query(collection(db, 'wanted_posts'), where('status', '==', 'open'), orderBy('created_at', 'desc'), limit(15))
+        );
+        const wantedPosts = wantedSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as any))
+          .filter((p) => p.buyer_id !== uid);
+
+        for (const post of wantedPosts) {
+          for (const myListing of myListings) {
+            const categoryMatch = post.category === myListing.category;
+            const termsOverlap = (post.search_terms ?? []).some((t: string) =>
+              (myListing.search_terms ?? []).includes(t)
+            );
+            if (categoryMatch || termsOverlap) {
+              const notifId = `wanted_match_${post.id}_${myListing.id}`;
+              const exists = await getDoc(doc(db, 'profiles', uid, 'notifications', notifId));
+              if (!exists.exists()) {
+                await setDoc(doc(db, 'profiles', uid, 'notifications', notifId), {
+                  type: 'wanted_match',
+                  title: "Someone wants what you're selling!",
+                  body: `"${post.title}" — your listing "${myListing.title}" might be a match`,
+                  listingId: myListing.id,
+                  wantedPostId: post.id,
+                  imageUrl: Array.isArray(myListing.image_url) ? myListing.image_url[0] : myListing.image_url ?? null,
+                  read: false,
+                  created_at: serverTimestamp(),
+                });
+              }
+            }
+          }
+        }
+      }
+
+      await updateDoc(doc(db, 'profiles', uid), { last_notif_check: serverTimestamp() });
+    } catch (e) {
+      console.error('Notification check error:', e);
+    }
+  };
 
   // <-- Extracted algorithm fetcher so we can call it on refresh
   const fetchRecommendations = async () => {
@@ -136,14 +215,15 @@ export default function HomeScreen() {
   useEffect(() => {
     // Run algorithm once on initial load
     fetchRecommendations();
+    checkNotifications();
 
     // STANDARD FEED: Fetch Recent Items (Real-time listener)
     const q = query(collection(db, 'listings'), orderBy('created_at', 'desc'), limit(30));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedListings = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const uid = auth.currentUser?.uid;
+      const fetchedListings = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as any))
+        .filter((listing: any) => listing.seller_id !== uid);
       setRealListings(fetchedListings);
       setLoading(false);
     }, (error) => {
@@ -299,9 +379,15 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
             <Ionicons name="search" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity className="relative">
+          <TouchableOpacity className="relative" onPress={() => router.push('/home/notifications')}>
             <Ionicons name="notifications" size={24} color="#FFFFFF" />
-            <View className="absolute -top-1 -right-1 bg-red-500 w-3 h-3 rounded-full border border-brand-primary" />
+            {unreadCount > 0 && (
+              <View className="absolute -top-1 -right-1 bg-red-500 min-w-[16px] h-4 rounded-full border border-brand-primary items-center justify-center px-0.5">
+                <Text className="text-white text-[9px] font-bold leading-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>

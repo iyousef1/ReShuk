@@ -52,9 +52,17 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="search/index"
         options={{
-          title: "Search", 
+          href: null, // hidden from tab bar; still reachable via router.push
+        }}
+      />
+
+      <Tabs.Screen
+        name="wanted"
+        listeners={{ tabPress: requireAuth }}
+        options={{
+          title: "Wanted",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "search" : "search-outline"} size={24} color={color} />
+            <Ionicons name={focused ? "search-circle" : "search-circle-outline"} size={26} color={color} />
           ),
         }}
       />

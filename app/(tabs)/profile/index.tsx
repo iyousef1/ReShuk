@@ -117,7 +117,9 @@ export default function ProfileScreen() {
         {/* Menu Options */}
         <View className="px-5 space-y-3 mt-2">
           
-          <TouchableOpacity className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/profile/my-listings')}
+            className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
             <View className="flex-row items-center">
               <View className="w-10 h-10 bg-brand-primary/10 rounded-full items-center justify-center mr-4">
                 <Ionicons name="pricetag-outline" size={20} color="#0F766E" />
@@ -127,7 +129,9 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/profile/favorites')}
+            className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
             <View className="flex-row items-center">
               <View className="w-10 h-10 bg-orange-500/10 rounded-full items-center justify-center mr-4">
                 <Ionicons name="heart-outline" size={20} color="#F97316" />

@@ -50,7 +50,7 @@ export default function SellIndexScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark px-5 pt-8" edges={['bottom']}>
-      <View className="items-center mb-10">
+      <View className="items-center mb-8">
         <View className="w-24 h-24 bg-brand-primary/10 rounded-full items-center justify-center mb-6">
           <Ionicons name="camera" size={48} color="#0F766E" />
         </View>
@@ -62,22 +62,49 @@ export default function SellIndexScreen() {
         </Text>
       </View>
 
-      <View className="space-y-4 mt-4">
-        <TouchableOpacity 
+      {/* AI Assist — featured option */}
+      <TouchableOpacity
+        onPress={() => router.push('/(tabs)/sell/ai-assist')}
+        className="flex-row items-center bg-brand-primary p-4 rounded-2xl mb-3"
+        style={{ shadowColor: '#0F766E', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
+      >
+        <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center mr-4">
+          <Ionicons name="sparkles" size={24} color="#FFFFFF" />
+        </View>
+        <View className="flex-1">
+          <View className="flex-row items-center">
+            <Text className="text-white font-bold text-lg">AI Listing Assistant</Text>
+            <View className="bg-white/25 px-2 py-0.5 rounded-full ml-2">
+              <Text className="text-white text-[10px] font-bold">NEW</Text>
+            </View>
+          </View>
+          <Text className="text-white/80 text-sm">Auto-fill title, price & description</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      <View className="flex-row items-center my-3">
+        <View className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+        <Text className="text-text-muted dark:text-text-darkMuted text-xs mx-3">or fill in manually</Text>
+        <View className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+      </View>
+
+      <View className="gap-3">
+        <TouchableOpacity
           onPress={() => handlePickImage(true)}
-          className="flex-row items-center bg-brand-primary p-4 rounded-2xl shadow-sm shadow-brand-primary/30"
+          className="flex-row items-center bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 p-4 rounded-2xl"
         >
-          <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center mr-4">
-            <Ionicons name="camera-outline" size={24} color="#FFFFFF" />
+          <View className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full items-center justify-center mr-4">
+            <Ionicons name="camera-outline" size={24} color="#0F766E" />
           </View>
           <View className="flex-1">
-            <Text className="text-white font-bold text-lg">Take a Photo</Text>
-            <Text className="text-brand-primary-light text-sm text-white/80">Use your camera right now</Text>
+            <Text className="text-text-primary dark:text-text-darkPrimary font-bold text-lg">Take a Photo</Text>
+            <Text className="text-text-muted dark:text-text-darkMuted text-sm">Use your camera right now</Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
+          <Ionicons name="chevron-forward" size={24} color="#94A3B8" />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => handlePickImage(false)}
           className="flex-row items-center bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 p-4 rounded-2xl"
         >

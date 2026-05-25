@@ -37,16 +37,27 @@ export default function SellLayout() {
           )
         }} 
       />
-      <Stack.Screen 
-        name="details" 
-        options={{ 
+      <Stack.Screen
+        name="details"
+        options={{
           title: 'Item Details',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="mr-4">
               <Ionicons name="chevron-back" size={24} color="#0F766E" />
             </TouchableOpacity>
           )
-        }} 
+        }}
+      />
+      <Stack.Screen
+        name="ai-assist"
+        options={{
+          title: 'AI Listing Assistant',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} className="mr-4">
+              <Ionicons name="chevron-back" size={24} color="#0F766E" />
+            </TouchableOpacity>
+          )
+        }}
       />
     </Stack>
   );

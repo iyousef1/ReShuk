@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { startOrGetChat } from '../../../src/features/chat/api';
 
 // Firebase Imports (Added updateDoc, increment, setDoc for the algorithm)
-import { doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
 const { width } = Dimensions.get('window');
@@ -30,6 +30,7 @@ export default function ListingDetailScreen() {
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isStartingChat, setIsStartingChat] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -78,6 +79,11 @@ export default function ListingDetailScreen() {
           }
           // ---------------------------------------------------------
 
+          // Check if already saved
+          if (auth.currentUser) {
+            const savedSnap = await getDoc(doc(db, 'profiles', auth.currentUser.uid, 'saved', docSnap.id));
+            setIsSaved(savedSnap.exists());
+          }
         } else {
           Alert.alert("Error", "This listing no longer exists.");
           router.back();
@@ -92,6 +98,27 @@ export default function ListingDetailScreen() {
 
     fetchListing();
   }, [listingId]);
+
+  const handleToggleSave = async () => {
+    if (!auth.currentUser) {
+      router.push('/(auth)/login');
+      return;
+    }
+    const savedRef = doc(db, 'profiles', auth.currentUser.uid, 'saved', listing.id);
+    if (isSaved) {
+      await deleteDoc(savedRef);
+      setIsSaved(false);
+    } else {
+      await setDoc(savedRef, {
+        title: listing.title,
+        price: listing.price,
+        image_url: listing.image_url,
+        category: listing.category,
+        saved_at: serverTimestamp(),
+      });
+      setIsSaved(true);
+    }
+  };
 
   const handleMessageSeller = async () => {
     if (!auth.currentUser) {
@@ -205,8 +232,11 @@ export default function ListingDetailScreen() {
         className="px-5 py-4 bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 flex-row items-center"
         style={{ paddingBottom: Math.max(insets.bottom, 16) }}
       >
-        <TouchableOpacity className="w-14 h-14 bg-surface-cardLight dark:bg-surface-cardDark rounded-2xl border border-slate-200 dark:border-slate-800 items-center justify-center mr-3 shadow-sm">
-          <Ionicons name="heart-outline" size={28} color="#94A3B8" />
+        <TouchableOpacity
+          onPress={handleToggleSave}
+          className="w-14 h-14 bg-surface-cardLight dark:bg-surface-cardDark rounded-2xl border border-slate-200 dark:border-slate-800 items-center justify-center mr-3 shadow-sm"
+        >
+          <Ionicons name={isSaved ? "heart" : "heart-outline"} size={28} color={isSaved ? "#EF4444" : "#94A3B8"} />
         </TouchableOpacity>
         
         <TouchableOpacity 
