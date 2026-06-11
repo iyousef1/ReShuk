@@ -13,46 +13,41 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Architecture Imports
 import ListingCard from '../../../src/features/listings/components/ListingCard';
 import { CATEGORY_CONFIG, COLORS } from '../../../src/features/listings/categoryConfig';
 
-// Firebase Imports
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
 const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Home', 'Sports', 'Toys', 'Vehicles', 'Books', 'Other'];
 
+const CATEGORY_ICONS: Record<string, { icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }> = {
+  All:         { icon: 'grid-outline',           activeIcon: 'grid' },
+  Electronics: { icon: 'phone-portrait-outline', activeIcon: 'phone-portrait' },
+  Fashion:     { icon: 'shirt-outline',          activeIcon: 'shirt' },
+  Home:        { icon: 'home-outline',           activeIcon: 'home' },
+  Sports:      { icon: 'football-outline',       activeIcon: 'football' },
+  Toys:        { icon: 'happy-outline',          activeIcon: 'happy' },
+  Vehicles:    { icon: 'car-outline',            activeIcon: 'car' },
+  Books:       { icon: 'book-outline',           activeIcon: 'book' },
+  Other:       { icon: 'cube-outline',           activeIcon: 'cube' },
+};
+
 const CONDITION_OPTIONS = ['New', 'Like New', 'Good', 'Fair', 'Parts Only'];
 
-// Map color names to hex values for the color dot UI
 const COLOR_HEX_MAP: Record<string, string> = {
-  Black: '#000000',
-  White: '#E5E7EB',
-  Grey: '#9CA3AF',
-  Blue: '#3B82F6',
-  Red: '#EF4444',
-  Green: '#22C55E',
-  Yellow: '#EAB308',
-  Orange: '#F97316',
-  Pink: '#EC4899',
-  Purple: '#A855F7',
-  Brown: '#92400E',
-  Silver: '#94A3B8',
-  Gold: '#D97706',
-  Beige: '#D4B896',
-  Multicolor: '#94A3B8',
+  Black: '#000000', White: '#E5E7EB', Grey: '#9CA3AF', Blue: '#3B82F6',
+  Red: '#EF4444', Green: '#22C55E', Yellow: '#EAB308', Orange: '#F97316',
+  Pink: '#EC4899', Purple: '#A855F7', Brown: '#92400E', Silver: '#94A3B8',
+  Gold: '#D97706', Beige: '#D4B896', Multicolor: '#94A3B8',
 };
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-
   const [allListings, setAllListings] = useState<any[]>([]);
   const [filteredListings, setFilteredListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Filter state
   const [filterSubCategory, setFilterSubCategory] = useState('');
   const [filterBrand, setFilterBrand] = useState('');
   const [filterCondition, setFilterCondition] = useState('');
@@ -61,109 +56,54 @@ export default function SearchScreen() {
   const [filterMaxPrice, setFilterMaxPrice] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Compute the active category config (null when 'All')
-  const activeCategoryConfig =
-    activeCategory !== 'All'
-      ? CATEGORY_CONFIG.find((c) => c.name === activeCategory) ?? null
-      : null;
+  const activeCategoryConfig = activeCategory !== 'All'
+    ? CATEGORY_CONFIG.find((c) => c.name === activeCategory) ?? null
+    : null;
 
-  // Active filter count (excluding category, which has its own pill UI)
-  const activeFilterCount = [
-    filterSubCategory,
-    filterBrand,
-    filterCondition,
-    filterColor,
-    filterMinPrice,
-    filterMaxPrice,
-  ].filter(Boolean).length;
+  const activeFilterCount = [filterSubCategory, filterBrand, filterCondition, filterColor, filterMinPrice, filterMaxPrice].filter(Boolean).length;
 
-  // Fetch all listings once when the screen loads
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const q = query(collection(db, 'listings'), orderBy('created_at', 'desc'));
-        const snapshot = await getDocs(q);
-
+        const snap = await getDocs(query(collection(db, 'listings'), orderBy('created_at', 'desc')));
         const uid = auth.currentUser?.uid;
-        const listings = snapshot.docs
-          .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as any))
-          .filter((listing: any) => listing.seller_id !== uid);
-
+        const listings = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as any))
+          .filter((l: any) => l.seller_id !== uid);
         setAllListings(listings);
         setFilteredListings(listings);
-      } catch (error) {
-        console.error('Error fetching for search:', error);
+      } catch (e) {
+        console.error('Error fetching for search:', e);
       } finally {
         setLoading(false);
       }
     };
-
     fetchListings();
   }, []);
 
-  // Reset sub-category and brand filters when the active category changes
   useEffect(() => {
     setFilterSubCategory('');
     setFilterBrand('');
   }, [activeCategory]);
 
-  // Filter the listings whenever any filter state changes
   useEffect(() => {
     let result = allListings;
-
-    // 1. Category filter
-    if (activeCategory !== 'All') {
-      result = result.filter((item) => item.category === activeCategory);
-    }
-
-    // 2. Text search (title + description)
-    if (searchQuery.trim() !== '') {
-      const lowerCaseQuery = searchQuery.toLowerCase();
-      result = result.filter(
-        (item) =>
-          (item.title && item.title.toLowerCase().includes(lowerCaseQuery)) ||
-          (item.description && item.description.toLowerCase().includes(lowerCaseQuery)),
+    if (activeCategory !== 'All') result = result.filter((i) => i.category === activeCategory);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((i) =>
+        (i.title && i.title.toLowerCase().includes(q)) ||
+        (i.description && i.description.toLowerCase().includes(q))
       );
     }
-
-    // 3. Advanced filters
-    if (filterSubCategory) {
-      result = result.filter((i) => i.sub_category === filterSubCategory);
-    }
-    if (filterBrand) {
-      result = result.filter(
-        (i) => i.brand === filterBrand || i.attributes?.brand === filterBrand,
-      );
-    }
-    if (filterCondition) {
-      result = result.filter(
-        (i) => i.condition === filterCondition || i.attributes?.condition === filterCondition,
-      );
-    }
-    if (filterColor) {
-      result = result.filter(
-        (i) => i.color === filterColor || i.attributes?.color === filterColor,
-      );
-    }
-    if (filterMinPrice) {
-      result = result.filter((i) => Number(i.price) >= Number(filterMinPrice));
-    }
-    if (filterMaxPrice) {
-      result = result.filter((i) => Number(i.price) <= Number(filterMaxPrice));
-    }
-
+    if (filterSubCategory) result = result.filter((i) => i.sub_category === filterSubCategory);
+    if (filterBrand) result = result.filter((i) => i.brand === filterBrand || i.attributes?.brand === filterBrand);
+    if (filterCondition) result = result.filter((i) => i.condition === filterCondition || i.attributes?.condition === filterCondition);
+    if (filterColor) result = result.filter((i) => i.color === filterColor || i.attributes?.color === filterColor);
+    if (filterMinPrice) result = result.filter((i) => Number(i.price) >= Number(filterMinPrice));
+    if (filterMaxPrice) result = result.filter((i) => Number(i.price) <= Number(filterMaxPrice));
     setFilteredListings(result);
-  }, [
-    searchQuery,
-    activeCategory,
-    allListings,
-    filterSubCategory,
-    filterBrand,
-    filterCondition,
-    filterColor,
-    filterMinPrice,
-    filterMaxPrice,
-  ]);
+  }, [searchQuery, activeCategory, allListings, filterSubCategory, filterBrand, filterCondition, filterColor, filterMinPrice, filterMaxPrice]);
 
   const handleClearAllFilters = () => {
     setFilterSubCategory('');
@@ -174,22 +114,24 @@ export default function SearchScreen() {
     setFilterMaxPrice('');
   };
 
-  const handleScroll = () => {
-    Keyboard.dismiss();
-  };
-
   return (
-    <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark" edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
 
-      {/* Header & Search Bar */}
-      <View className="px-5 pt-4 pb-2 bg-surface-light dark:bg-surface-dark z-10">
-        <Text className="text-3xl font-extrabold text-brand-primary tracking-tight mb-4">
+      {/* Header */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14, backgroundColor: '#F8FAFC' }}>
+        <Text style={{ fontSize: 30, fontWeight: '800', color: '#0F766E', letterSpacing: -0.5, marginBottom: 14 }}>
           Discover
         </Text>
 
-        <View className="flex-row items-center gap-3 mb-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           {/* Search input */}
-          <View className="flex-1 flex-row items-center bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 shadow-sm">
+          <View style={{
+            flex: 1, flexDirection: 'row', alignItems: 'center',
+            backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
+            borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13,
+            shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+          }}>
             <Ionicons name="search-outline" size={20} color="#94A3B8" />
             <TextInput
               value={searchQuery}
@@ -197,7 +139,7 @@ export default function SearchScreen() {
               placeholder="Search for anything..."
               placeholderTextColor="#94A3B8"
               returnKeyType="search"
-              className="flex-1 ml-2 text-text-primary dark:text-text-darkPrimary text-base"
+              style={{ flex: 1, marginLeft: 10, fontSize: 15, color: '#0F172A' }}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -206,60 +148,73 @@ export default function SearchScreen() {
             )}
           </View>
 
-          {/* Filter button with badge */}
+          {/* Filter button */}
           <TouchableOpacity
             onPress={() => setShowFilters(true)}
-            className="relative w-12 h-12 bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-xl items-center justify-center shadow-sm"
+            style={{
+              position: 'relative', width: 48, height: 48,
+              backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
+              borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+              shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+            }}
           >
-            <Ionicons
-              name="options-outline"
-              size={22}
-              color={activeFilterCount > 0 ? '#0F766E' : '#94A3B8'}
-            />
+            <Ionicons name="options-outline" size={22} color={activeFilterCount > 0 ? '#0F766E' : '#94A3B8'} />
             {activeFilterCount > 0 && (
-              <View className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full items-center justify-center">
-                <Text className="text-white text-xs font-bold">{activeFilterCount}</Text>
+              <View style={{
+                position: 'absolute', top: -5, right: -5,
+                width: 18, height: 18, borderRadius: 9,
+                backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>{activeFilterCount}</Text>
               </View>
             )}
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Category Filter Pills */}
-      <View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }}
-        >
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat;
-            return (
-              <TouchableOpacity
-                key={cat}
-                onPress={() => setActiveCategory(cat)}
-                className={`flex-row items-center px-4 py-2 rounded-full mr-3 border ${
-                  isActive
-                    ? 'bg-brand-primary border-brand-primary'
-                    : 'bg-surface-cardLight dark:bg-surface-cardDark border-slate-200 dark:border-slate-800'
-                }`}
-              >
-                <Text
-                  className={`font-semibold ${
-                    isActive ? 'text-white' : 'text-text-primary dark:text-text-darkPrimary'
-                  }`}
-                >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+      {/* Category Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14 }}
+      >
+        {CATEGORIES.map((cat) => {
+          const isActive = activeCategory === cat;
+          const icons = CATEGORY_ICONS[cat];
+          return (
+            <TouchableOpacity
+              key={cat}
+              onPress={() => setActiveCategory(cat)}
+              style={{
+                flexDirection: 'row', alignItems: 'center',
+                paddingHorizontal: 14, paddingVertical: 9,
+                borderRadius: 50, marginRight: 10,
+                backgroundColor: isActive ? '#0F766E' : '#FFFFFF',
+                borderWidth: 1.5, borderColor: isActive ? '#0F766E' : '#E2E8F0',
+              }}
+            >
+              {icons && (
+                <Ionicons
+                  name={isActive ? icons.activeIcon : icons.icon}
+                  size={14}
+                  color={isActive ? '#FFFFFF' : '#64748B'}
+                />
+              )}
+              <Text style={{
+                marginLeft: icons ? 6 : 0, fontWeight: '600', fontSize: 13,
+                color: isActive ? '#FFFFFF' : '#475569',
+              }}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
       {/* Results Grid */}
       {loading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#0F766E" />
         </View>
       ) : (
@@ -267,17 +222,22 @@ export default function SearchScreen() {
           data={filteredListings}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          onScrollBeginDrag={handleScroll}
+          onScrollBeginDrag={Keyboard.dismiss}
           contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
+          columnWrapperStyle={{ gap: 4 }}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <ListingCard item={item} />}
+          renderItem={({ item }) => (
+            <View style={{ flex: 1, paddingHorizontal: 4 }}>
+              <ListingCard item={item} />
+            </View>
+          )}
           ListEmptyComponent={
-            <View className="flex-1 items-center justify-center mt-20 px-5">
-              <Ionicons name="search-outline" size={64} color="#E2E8F0" />
-              <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mt-4 text-center">
+            <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 }}>
+              <Ionicons name="search-outline" size={56} color="#E2E8F0" />
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A', marginTop: 16, textAlign: 'center' }}>
                 No results found
               </Text>
-              <Text className="text-text-muted dark:text-text-darkMuted text-center mt-2">
+              <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 6, lineHeight: 20 }}>
                 Try adjusting your search or selecting a different category.
               </Text>
             </View>
@@ -286,62 +246,46 @@ export default function SearchScreen() {
       )}
 
       {/* Filter Modal */}
-      <Modal
-        visible={showFilters}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowFilters(false)}
-      >
-        <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark" edges={['top', 'bottom']}>
+      <Modal visible={showFilters} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowFilters(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top', 'bottom']}>
+
           {/* Modal Header */}
-          <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            paddingHorizontal: 20, paddingVertical: 16,
+            borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+          }}>
             <TouchableOpacity onPress={handleClearAllFilters}>
-              <Text className="text-action-cta font-semibold text-base">Clear All</Text>
+              <Text style={{ color: '#0F766E', fontWeight: '600', fontSize: 15 }}>Clear All</Text>
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-text-primary dark:text-text-darkPrimary">
-              Filters
-            </Text>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#0F172A' }}>Filters</Text>
             <TouchableOpacity onPress={() => setShowFilters(false)}>
               <Ionicons name="close" size={24} color="#94A3B8" />
             </TouchableOpacity>
           </View>
 
-          {/* Scrollable filter content */}
-          <ScrollView
-            className="flex-1 px-5"
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Sub-category section (only when a non-All category is selected) */}
+          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+
+            {/* Sub-category */}
             {activeCategoryConfig && activeCategoryConfig.subCategories.length > 0 && (
-              <View className="mt-6 mb-2">
-                <Text className="text-xs font-bold text-text-muted dark:text-text-darkMuted mb-3 uppercase tracking-wider">
+              <View style={{ marginTop: 24, marginBottom: 4 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
                   Sub-category
                 </Text>
-                <View className="flex-row flex-wrap gap-2">
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {activeCategoryConfig.subCategories.map((sub) => {
-                    const isSelected = filterSubCategory === sub.name;
+                    const sel = filterSubCategory === sub.name;
                     return (
                       <TouchableOpacity
                         key={sub.id}
-                        onPress={() =>
-                          setFilterSubCategory((prev) => (prev === sub.name ? '' : sub.name))
-                        }
-                        className={`px-4 py-2 rounded-full border ${
-                          isSelected
-                            ? 'bg-brand-primary border-brand-primary'
-                            : 'bg-surface-cardLight dark:bg-surface-cardDark border-slate-200 dark:border-slate-700'
-                        }`}
+                        onPress={() => setFilterSubCategory((p) => p === sub.name ? '' : sub.name)}
+                        style={{
+                          paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
+                          backgroundColor: sel ? '#0F766E' : '#FFFFFF',
+                          borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
+                        }}
                       >
-                        <Text
-                          className={`text-sm font-medium ${
-                            isSelected
-                              ? 'text-white'
-                              : 'text-text-primary dark:text-text-darkPrimary'
-                          }`}
-                        >
-                          {sub.name}
-                        </Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#FFFFFF' : '#475569' }}>{sub.name}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -349,40 +293,26 @@ export default function SearchScreen() {
               </View>
             )}
 
-            {/* Brand section (only when a non-All category is selected and has brands) */}
+            {/* Brand */}
             {activeCategoryConfig && activeCategoryConfig.brands.length > 0 && (
-              <View className="mt-6 mb-2">
-                <Text className="text-xs font-bold text-text-muted dark:text-text-darkMuted mb-3 uppercase tracking-wider">
+              <View style={{ marginTop: 24, marginBottom: 4 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
                   Brand
                 </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 4 }}
-                >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {activeCategoryConfig.brands.map((brand) => {
-                    const isSelected = filterBrand === brand;
+                    const sel = filterBrand === brand;
                     return (
                       <TouchableOpacity
                         key={brand}
-                        onPress={() =>
-                          setFilterBrand((prev) => (prev === brand ? '' : brand))
-                        }
-                        className={`mr-2 px-4 py-2 rounded-full border ${
-                          isSelected
-                            ? 'bg-brand-primary border-brand-primary'
-                            : 'bg-surface-cardLight dark:bg-surface-cardDark border-slate-200 dark:border-slate-700'
-                        }`}
+                        onPress={() => setFilterBrand((p) => p === brand ? '' : brand)}
+                        style={{
+                          marginRight: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
+                          backgroundColor: sel ? '#0F766E' : '#FFFFFF',
+                          borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
+                        }}
                       >
-                        <Text
-                          className={`text-sm font-medium ${
-                            isSelected
-                              ? 'text-white'
-                              : 'text-text-primary dark:text-text-darkPrimary'
-                          }`}
-                        >
-                          {brand}
-                        </Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#FFFFFF' : '#475569' }}>{brand}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -390,119 +320,91 @@ export default function SearchScreen() {
               </View>
             )}
 
-            {/* Condition section */}
-            <View className="mt-6 mb-2">
-              <Text className="text-xs font-bold text-text-muted dark:text-text-darkMuted mb-3 uppercase tracking-wider">
+            {/* Condition */}
+            <View style={{ marginTop: 24, marginBottom: 4 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
                 Condition
               </Text>
-              <View className="flex-row flex-wrap gap-2">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {CONDITION_OPTIONS.map((cond) => {
-                  const isSelected = filterCondition === cond;
+                  const sel = filterCondition === cond;
                   return (
                     <TouchableOpacity
                       key={cond}
-                      onPress={() =>
-                        setFilterCondition((prev) => (prev === cond ? '' : cond))
-                      }
-                      className={`px-4 py-2 rounded-full border ${
-                        isSelected
-                          ? 'bg-brand-primary border-brand-primary'
-                          : 'bg-surface-cardLight dark:bg-surface-cardDark border-slate-200 dark:border-slate-700'
-                      }`}
+                      onPress={() => setFilterCondition((p) => p === cond ? '' : cond)}
+                      style={{
+                        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
+                        backgroundColor: sel ? '#0F766E' : '#FFFFFF',
+                        borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
+                      }}
                     >
-                      <Text
-                        className={`text-sm font-medium ${
-                          isSelected
-                            ? 'text-white'
-                            : 'text-text-primary dark:text-text-darkPrimary'
-                        }`}
-                      >
-                        {cond}
-                      </Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#FFFFFF' : '#475569' }}>{cond}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
             </View>
 
-            {/* Price Range section */}
-            <View className="mt-6 mb-2">
-              <Text className="text-xs font-bold text-text-muted dark:text-text-darkMuted mb-3 uppercase tracking-wider">
+            {/* Price Range */}
+            <View style={{ marginTop: 24, marginBottom: 4 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
                 Price Range
               </Text>
-              <View className="flex-row gap-3">
-                <View className="flex-1">
-                  <Text className="text-xs text-text-muted dark:text-text-darkMuted mb-1">
-                    Min $
-                  </Text>
-                  <TextInput
-                    value={filterMinPrice}
-                    onChangeText={setFilterMinPrice}
-                    placeholder="0"
-                    placeholderTextColor="#94A3B8"
-                    keyboardType="numeric"
-                    className="bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-text-primary dark:text-text-darkPrimary text-base"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-xs text-text-muted dark:text-text-darkMuted mb-1">
-                    Max $
-                  </Text>
-                  <TextInput
-                    value={filterMaxPrice}
-                    onChangeText={setFilterMaxPrice}
-                    placeholder="Any"
-                    placeholderTextColor="#94A3B8"
-                    keyboardType="numeric"
-                    className="bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-text-primary dark:text-text-darkPrimary text-base"
-                  />
-                </View>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {[
+                  { label: 'Min $', value: filterMinPrice, onChange: setFilterMinPrice, placeholder: '0' },
+                  { label: 'Max $', value: filterMaxPrice, onChange: setFilterMaxPrice, placeholder: 'Any' },
+                ].map((field) => (
+                  <View key={field.label} style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6, fontWeight: '500' }}>{field.label}</Text>
+                    <TextInput
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      placeholder={field.placeholder}
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="numeric"
+                      style={{
+                        backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#E2E8F0',
+                        borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+                        fontSize: 15, color: '#0F172A',
+                      }}
+                    />
+                  </View>
+                ))}
               </View>
             </View>
 
-            {/* Color section */}
-            <View className="mt-6 mb-8">
-              <Text className="text-xs font-bold text-text-muted dark:text-text-darkMuted mb-3 uppercase tracking-wider">
+            {/* Color */}
+            <View style={{ marginTop: 24, marginBottom: 32 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
                 Color
               </Text>
-              <View className="flex-row flex-wrap gap-2">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {COLORS.map((colorOpt) => {
-                  const isSelected = filterColor === colorOpt.value;
-                  const hexColor = COLOR_HEX_MAP[colorOpt.value];
+                  const sel = filterColor === colorOpt.value;
+                  const hex = COLOR_HEX_MAP[colorOpt.value];
                   return (
                     <TouchableOpacity
                       key={colorOpt.value}
-                      onPress={() =>
-                        setFilterColor((prev) => (prev === colorOpt.value ? '' : colorOpt.value))
-                      }
-                      className={`flex-row items-center px-3 py-2 rounded-full border ${
-                        isSelected
-                          ? 'bg-brand-primary border-brand-primary'
-                          : 'bg-surface-cardLight dark:bg-surface-cardDark border-slate-200 dark:border-slate-700'
-                      }`}
+                      onPress={() => setFilterColor((p) => p === colorOpt.value ? '' : colorOpt.value)}
+                      style={{
+                        flexDirection: 'row', alignItems: 'center',
+                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 50,
+                        backgroundColor: sel ? '#0F766E' : '#FFFFFF',
+                        borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
+                        gap: 6,
+                      }}
                     >
-                      {/* Color dot */}
                       {colorOpt.value !== 'Multicolor' ? (
-                        <View
-                          style={{ backgroundColor: hexColor }}
-                          className="w-3.5 h-3.5 rounded-full mr-1.5 border border-slate-200"
-                        />
+                        <View style={{ width: 13, height: 13, borderRadius: 7, backgroundColor: hex, borderWidth: 1, borderColor: '#E2E8F0' }} />
                       ) : (
-                        <View className="w-3.5 h-3.5 rounded-full mr-1.5 border border-slate-300 overflow-hidden flex-row">
-                          <View className="flex-1 bg-red-400" />
-                          <View className="flex-1 bg-green-400" />
-                          <View className="flex-1 bg-blue-400" />
+                        <View style={{ width: 13, height: 13, borderRadius: 7, overflow: 'hidden', flexDirection: 'row' }}>
+                          <View style={{ flex: 1, backgroundColor: '#F87171' }} />
+                          <View style={{ flex: 1, backgroundColor: '#4ADE80' }} />
+                          <View style={{ flex: 1, backgroundColor: '#60A5FA' }} />
                         </View>
                       )}
-                      <Text
-                        className={`text-sm font-medium ${
-                          isSelected
-                            ? 'text-white'
-                            : 'text-text-primary dark:text-text-darkPrimary'
-                        }`}
-                      >
-                        {colorOpt.label}
-                      </Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#FFFFFF' : '#475569' }}>{colorOpt.label}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -510,13 +412,13 @@ export default function SearchScreen() {
             </View>
           </ScrollView>
 
-          {/* Sticky Show Results button */}
-          <View className="px-5 pb-5 pt-3 border-t border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark">
+          {/* Show Results */}
+          <View style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: '#F8FAFC' }}>
             <TouchableOpacity
               onPress={() => setShowFilters(false)}
-              className="bg-brand-primary py-4 rounded-xl items-center justify-center"
+              style={{ backgroundColor: '#0F766E', paddingVertical: 16, borderRadius: 14, alignItems: 'center' }}
             >
-              <Text className="text-white font-bold text-lg">
+              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>
                 Show {filteredListings.length} Result{filteredListings.length !== 1 ? 's' : ''}
               </Text>
             </TouchableOpacity>

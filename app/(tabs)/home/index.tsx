@@ -5,8 +5,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  RefreshControl // <-- Added RefreshControl here
-  ,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -14,51 +13,70 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import the Reusable Card we built earlier
 import ListingCard from '../../../src/features/listings/components/ListingCard';
 
-// Firebase Imports
 import { Timestamp, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
-// Your Mock Data
+const CATEGORIES = [
+  { label: 'All', icon: 'grid-outline' as const, activeIcon: 'grid' as const },
+  { label: 'Electronics', icon: 'phone-portrait-outline' as const, activeIcon: 'phone-portrait' as const },
+  { label: 'Fashion', icon: 'shirt-outline' as const, activeIcon: 'shirt' as const },
+  { label: 'Home', icon: 'home-outline' as const, activeIcon: 'home' as const },
+  { label: 'Sports', icon: 'football-outline' as const, activeIcon: 'football' as const },
+  { label: 'Books', icon: 'book-outline' as const, activeIcon: 'book' as const },
+];
+
 const FEATURED_LISTINGS = [
   {
     id: '1',
     title: 'iPhone 12 Pro',
     price: '$450',
     image: 'https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=500&q=80',
-    badge: 'SMART DEAL',
-    badgeColor: 'bg-badge-ai', 
+    condition: 'Like New',
+    rating: 4.8,
   },
   {
     id: '2',
     title: 'Vintage Record Player',
     price: '$120',
     image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5e?w=500&q=80',
-    badge: 'NEW',
-    badgeColor: 'bg-brand-primary', 
+    condition: 'Good',
+    rating: 4.5,
   },
   {
     id: '3',
     title: 'Nike Air Max Sneakers',
     price: '$60',
     image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80',
-    badge: 'POPULAR',
-    badgeColor: 'bg-action-warning', 
-  }
+    condition: 'Fair',
+    rating: 4.2,
+  },
 ];
+
+const CONDITION_COLORS: Record<string, string> = {
+  likenew: '#22C55E',
+  good: '#3B82F6',
+  fair: '#F97316',
+  poor: '#EF4444',
+};
+
+function getConditionColor(condition: string) {
+  return CONDITION_COLORS[condition.toLowerCase().replace(/\s+/g, '')] ?? '#94A3B8';
+}
 
 export default function HomeScreen() {
   const router = useRouter();
-  
+
+  const [activeCategory, setActiveCategory] = useState('All');
   const [realListings, setRealListings] = useState<any[]>([]);
   const [recommendedListings, setRecommendedListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [userPhotoURL, setUserPhotoURL] = useState<string | null>(null);
+  const [userName, setUserName] = useState('Yousef');
 
-  // Subscribe to unread notification count
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
@@ -69,11 +87,18 @@ export default function HomeScreen() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      if (user.photoURL) setUserPhotoURL(user.photoURL);
+      if (user.displayName) setUserName(user.displayName.split(' ')[0]);
+    }
+  }, []);
+
   const checkNotifications = async () => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
     try {
-      // 1. Price drops — compare saved price vs current listing price
       const savedSnap = await getDocs(collection(db, 'profiles', uid, 'saved'));
       for (const savedDoc of savedSnap.docs.slice(0, 20)) {
         const saved = savedDoc.data();
@@ -93,7 +118,6 @@ export default function HomeScreen() {
         }
       }
 
-      // 2. Wanted matches — check new wanted posts against user's own listings
       const myListingsSnap = await getDocs(
         query(collection(db, 'listings'), where('seller_id', '==', uid))
       );
@@ -139,7 +163,6 @@ export default function HomeScreen() {
     }
   };
 
-  // <-- Extracted algorithm fetcher so we can call it on refresh
   const fetchRecommendations = async () => {
     try {
       if (!auth.currentUser) return;
@@ -153,7 +176,6 @@ export default function HomeScreen() {
       const categoryScores: Record<string, number> = data.category_scores ?? {};
       const lastUpdated: Timestamp | null = data.keyword_scores_updated_at ?? null;
 
-      // Apply time decay: scores lose 5% of value per day so old interests fade out
       const decayFactor = lastUpdated
         ? Math.pow(0.95, (Date.now() - lastUpdated.toMillis()) / 86_400_000)
         : 1;
@@ -175,7 +197,6 @@ export default function HomeScreen() {
       const seen = new Set<string>();
       const results: any[] = [];
 
-      // Query by top keywords
       if (topKeywords.length > 0) {
         const snap = await getDocs(query(
           collection(db, 'listings'),
@@ -187,7 +208,6 @@ export default function HomeScreen() {
           .forEach(d => { if (!seen.has(d.id)) { seen.add(d.id); results.push({ id: d.id, ...d.data() }); } });
       }
 
-      // Query by top categories to fill in gaps
       if (topCategories.length > 0) {
         const snap = await getDocs(query(
           collection(db, 'listings'),
@@ -201,23 +221,20 @@ export default function HomeScreen() {
 
       setRecommendedListings(results);
     } catch (error) {
-      console.error("Error fetching recommendations:", error);
+      console.error('Error fetching recommendations:', error);
     }
   };
 
-  // <-- The actual Refresh function
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchRecommendations(); // Re-run the algorithm
+    await fetchRecommendations();
     setRefreshing(false);
   };
 
   useEffect(() => {
-    // Run algorithm once on initial load
     fetchRecommendations();
     checkNotifications();
 
-    // STANDARD FEED: Fetch Recent Items (Real-time listener)
     const q = query(collection(db, 'listings'), orderBy('created_at', 'desc'), limit(30));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const uid = auth.currentUser?.uid;
@@ -227,130 +244,210 @@ export default function HomeScreen() {
       setRealListings(fetchedListings);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching listings:", error);
+      console.error('Error fetching listings:', error);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // This function contains all your beautiful custom UI up top
-  const renderHeader = () => (
-    <View className="pb-6">
-      <View className="px-5 pt-5 pb-2">
-        {/* Greeting */}
-        <Text className="text-xl font-bold text-text-primary dark:text-text-darkPrimary mb-1">
-          Hi, Yousef 👋
-        </Text>
-        <Text className="text-text-muted dark:text-text-darkMuted mb-5">
-          Find the best deals near you!
-        </Text>
+  const filteredListings = activeCategory === 'All'
+    ? realListings
+    : realListings.filter(item => item.category?.toLowerCase() === activeCategory.toLowerCase());
 
-        {/* Search Bar (Now Routes to Search Tab) */}
-        <TouchableOpacity 
-          onPress={() => router.push('/(tabs)/search')}
-          className="flex-row items-center bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 mb-6"
-        >
-          <Ionicons name="search-outline" size={20} color="#94A3B8" />
-          <Text className="flex-1 ml-2 text-text-muted dark:text-text-darkMuted text-base">
-            Search for items...
+  const renderHeader = () => (
+    <View style={{ paddingBottom: 8 }}>
+
+      {/* Greeting Row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 22, paddingBottom: 6 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 28, fontWeight: '800', color: '#0F172A', letterSpacing: -0.5 }}>
+            Hi, {userName} 👋
           </Text>
+          <Text style={{ fontSize: 14, color: '#94A3B8', marginTop: 3 }}>
+            Find the best deals near you!
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
+          <View style={{
+            width: 46, height: 46, borderRadius: 23,
+            backgroundColor: '#CCFBF1', alignItems: 'center', justifyContent: 'center',
+            overflow: 'hidden', borderWidth: 2, borderColor: '#0F766E',
+          }}>
+            {userPhotoURL ? (
+              <Image source={{ uri: userPhotoURL }} style={{ width: 46, height: 46 }} />
+            ) : (
+              <Ionicons name="person" size={22} color="#0F766E" />
+            )}
+          </View>
         </TouchableOpacity>
       </View>
 
-      {/* Category Pills (Horizontal Scroll) */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        contentContainerStyle={{ paddingHorizontal: 20 }}
-        className="mb-6"
+      {/* Search Bar */}
+      <TouchableOpacity
+        onPress={() => router.push('/(tabs)/search')}
+        style={{
+          flexDirection: 'row', alignItems: 'center',
+          backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
+          borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
+          marginHorizontal: 20, marginTop: 16, marginBottom: 20,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+        }}
       >
-        <TouchableOpacity className="bg-brand-primary flex-row items-center px-4 py-2 rounded-full mr-3">
-          <Ionicons name="home" size={16} color="#FFFFFF" />
-          <Text className="text-white font-semibold ml-2">All</Text>
-        </TouchableOpacity>
-        
-        {['Electronics', 'Fashion', 'Home', 'Sports'].map((cat) => (
-          <TouchableOpacity key={cat} className="bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 flex-row items-center px-4 py-2 rounded-full mr-3">
-            <Ionicons name="desktop-outline" size={16} color="#0F766E" />
-            <Text className="text-text-primary dark:text-text-darkPrimary font-semibold ml-2">{cat}</Text>
-          </TouchableOpacity>
-        ))}
+        <Ionicons name="search-outline" size={20} color="#94A3B8" />
+        <Text style={{ flex: 1, marginLeft: 10, color: '#94A3B8', fontSize: 15 }}>
+          Search for items...
+        </Text>
+        <Ionicons name="camera-outline" size={20} color="#0F766E" />
+      </TouchableOpacity>
+
+      {/* Category Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20 }}
+        style={{ marginBottom: 20 }}
+      >
+        {CATEGORIES.map((cat) => {
+          const isActive = activeCategory === cat.label;
+          return (
+            <TouchableOpacity
+              key={cat.label}
+              onPress={() => setActiveCategory(cat.label)}
+              style={{
+                flexDirection: 'row', alignItems: 'center',
+                paddingHorizontal: 16, paddingVertical: 10,
+                borderRadius: 50, marginRight: 10,
+                backgroundColor: isActive ? '#0F766E' : '#FFFFFF',
+                borderWidth: 1.5, borderColor: isActive ? '#0F766E' : '#E2E8F0',
+              }}
+            >
+              <Ionicons
+                name={isActive ? cat.activeIcon : cat.icon}
+                size={15}
+                color={isActive ? '#FFFFFF' : '#64748B'}
+              />
+              <Text style={{
+                marginLeft: 6, fontWeight: '600', fontSize: 13,
+                color: isActive ? '#FFFFFF' : '#475569',
+              }}>
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
-      <View className="px-5">
-        {/* Eco-Friendly Banner */}
-        <View className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 flex-row items-center justify-between mb-8">
-          <View className="flex-row items-center flex-1">
-            <Ionicons name="leaf" size={28} color="#65A30D" />
-            <View className="ml-3">
-              <Text className="text-text-primary dark:text-text-darkPrimary font-bold text-base">
-                Eco-Friendly Finds ♻️
-              </Text>
-              <Text className="text-text-muted dark:text-text-darkMuted text-xs mt-0.5">
-                Save money & reduce waste
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity className="bg-green-600 px-4 py-2 rounded-full">
-            <Text className="text-white font-bold text-xs">Shop Green</Text>
-          </TouchableOpacity>
+      {/* AI Banner */}
+      <TouchableOpacity
+        onPress={() => router.push('/(tabs)/sell')}
+        style={{
+          marginHorizontal: 20, marginBottom: 28,
+          backgroundColor: '#0F766E', borderRadius: 18,
+          padding: 18, flexDirection: 'row', alignItems: 'center',
+        }}
+        activeOpacity={0.85}
+      >
+        <View style={{
+          width: 46, height: 46, borderRadius: 23,
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Ionicons name="camera" size={22} color="#FFFFFF" />
         </View>
+        <View style={{ flex: 1, marginLeft: 14 }}>
+          <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>Sell faster with AI</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 12, marginTop: 2 }}>
+            Photo → listing in seconds
+          </Text>
+        </View>
+        <View style={{
+          width: 34, height: 34, borderRadius: 17,
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+        </View>
+      </TouchableOpacity>
 
-        {/* Featured Listings Header */}
-        <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-4">
+      {/* Featured Listings */}
+      <View style={{ paddingHorizontal: 20, marginBottom: 14 }}>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', letterSpacing: -0.3 }}>
           Featured Listings
         </Text>
       </View>
-
-      {/* Featured Cards (Horizontal Scroll) */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20 }}
-        className="mb-8"
+        style={{ marginBottom: 28 }}
       >
-        {FEATURED_LISTINGS.map((item) => (
-          <TouchableOpacity 
-            key={item.id}
-            onPress={() => console.log('Mock item tapped')}
-            className="w-36 bg-surface-cardLight dark:bg-surface-cardDark rounded-2xl overflow-hidden mr-4 shadow-sm border border-slate-100 dark:border-slate-800"
-          >
-            <View className="h-36 relative">
-              <Image source={{ uri: item.image }} className="w-full h-full" resizeMode="cover" />
-              <View className={`absolute top-0 right-0 ${item.badgeColor || 'bg-brand-primary'} px-2 py-1 rounded-bl-lg`}>
-                <Text className="text-white text-[10px] font-bold">{item.badge}</Text>
+        {FEATURED_LISTINGS.map((item) => {
+          const conditionColor = getConditionColor(item.condition);
+          return (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => console.log('Mock item tapped')}
+              activeOpacity={0.85}
+              style={{
+                width: 172, backgroundColor: '#FFFFFF', borderRadius: 16,
+                overflow: 'hidden', marginRight: 14,
+                shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+                borderWidth: 1, borderColor: '#F1F5F9',
+              }}
+            >
+              <View style={{ height: 186, position: 'relative' }}>
+                <Image
+                  source={{ uri: item.image }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+                <View style={{
+                  position: 'absolute', top: 10, left: 10,
+                  backgroundColor: conditionColor, borderRadius: 20,
+                  paddingHorizontal: 9, paddingVertical: 3.5,
+                }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>
+                    {item.condition}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View className="p-3">
-              <Text className="text-text-primary dark:text-text-darkPrimary font-bold mb-1" numberOfLines={1}>
-                {item.price}
-              </Text>
-              <Text className="text-text-muted dark:text-text-darkMuted text-xs mb-2" numberOfLines={1}>
-                {item.title}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+              <View style={{ padding: 12 }}>
+                <Text style={{ color: '#0F172A', fontWeight: '800', fontSize: 17, marginBottom: 2 }} numberOfLines={1}>
+                  {item.price}
+                </Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 9 }} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="star" size={12} color="#F59E0B" />
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#334155', marginLeft: 4 }}>
+                    {item.rating}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
-      {/* ---------------------------------------------------- */}
-      {/* ALGORITHM UI: "For You" Section                      */}
-      {/* ---------------------------------------------------- */}
+      {/* For You Section */}
       {recommendedListings.length > 0 && (
-        <View className="mb-8">
-          <View className="px-5">
-            <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-4 flex-row items-center">
+        <View style={{ marginBottom: 28 }}>
+          <View style={{ paddingHorizontal: 20, marginBottom: 14 }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', letterSpacing: -0.3 }}>
               For You ✨
             </Text>
           </View>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 20 }}
           >
             {recommendedListings.map((item) => (
-              <View key={`rec-${item.id}`} className="w-48 mr-4">
+              <View key={`rec-${item.id}`} style={{ width: 172, marginRight: 14 }}>
                 <ListingCard item={item} />
               </View>
             ))}
@@ -359,8 +456,8 @@ export default function HomeScreen() {
       )}
 
       {/* Recent Finds Header */}
-      <View className="px-5">
-        <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-4">
+      <View style={{ paddingHorizontal: 20, marginBottom: 14 }}>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', letterSpacing: -0.3 }}>
           Recent Finds
         </Text>
       </View>
@@ -368,22 +465,31 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark" edges={['top']}>
-      
-      {/* Custom Top Bar */}
-      <View className="px-5 py-4 flex-row justify-between items-center bg-brand-primary dark:bg-surface-dark">
-        <Text className="text-white text-2xl font-extrabold tracking-tight">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
+
+      {/* Top Bar */}
+      <View style={{
+        paddingHorizontal: 20, paddingVertical: 14,
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        backgroundColor: '#0F766E',
+      }}>
+        <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '800', letterSpacing: -0.5 }}>
           ReShuk
         </Text>
-        <View className="flex-row items-center gap-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
           <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
             <Ionicons name="search" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity className="relative" onPress={() => router.push('/home/notifications')}>
+          <TouchableOpacity style={{ position: 'relative' }} onPress={() => router.push('/home/notifications')}>
             <Ionicons name="notifications" size={24} color="#FFFFFF" />
             {unreadCount > 0 && (
-              <View className="absolute -top-1 -right-1 bg-red-500 min-w-[16px] h-4 rounded-full border border-brand-primary items-center justify-center px-0.5">
-                <Text className="text-white text-[9px] font-bold leading-none">
+              <View style={{
+                position: 'absolute', top: -4, right: -4,
+                backgroundColor: '#EF4444', minWidth: 16, height: 16,
+                borderRadius: 8, borderWidth: 1.5, borderColor: '#0F766E',
+                alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2,
+              }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '700', lineHeight: 12 }}>
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </Text>
               </View>
@@ -392,42 +498,39 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Real Data Grid with your UI on top */}
       {loading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#0F766E" />
         </View>
       ) : (
         <FlatList
-          data={realListings}
+          data={filteredListings}
           keyExtractor={(item) => item.id}
           numColumns={2}
           contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
+          columnWrapperStyle={{ gap: 4 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={renderHeader}
-          
-          // <-- Added the RefreshControl prop here
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={onRefresh} 
-              tintColor="#0F766E" 
-              colors={['#0F766E']} 
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#0F766E"
+              colors={['#0F766E']}
             />
           }
-
           renderItem={({ item }) => (
-            <View className="flex-1 px-2">
+            <View style={{ flex: 1, paddingHorizontal: 4 }}>
               <ListingCard item={item} />
             </View>
           )}
           ListEmptyComponent={
-            <View className="items-center justify-center mt-10 px-5">
+            <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 40, paddingHorizontal: 20 }}>
               <Ionicons name="cube-outline" size={64} color="#E2E8F0" />
-              <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mt-4 text-center">
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A', marginTop: 16, textAlign: 'center' }}>
                 No items yet
               </Text>
-              <Text className="text-text-muted dark:text-text-darkMuted text-center">
+              <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 6 }}>
                 Be the first to upload an item!
               </Text>
             </View>

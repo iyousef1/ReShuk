@@ -11,155 +11,180 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Firebase Imports
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../src/lib/firebase';
 
+const MENU_ITEMS = [
+  {
+    label: 'My Listings',
+    icon: 'pricetag-outline' as const,
+    iconColor: '#0F766E',
+    iconBg: '#CCFBF1',
+    route: '/(tabs)/profile/my-listings' as const,
+  },
+  {
+    label: 'Saved Items',
+    icon: 'heart-outline' as const,
+    iconColor: '#F97316',
+    iconBg: '#FFF7ED',
+    route: '/(tabs)/profile/favorites' as const,
+  },
+  {
+    label: 'Settings',
+    icon: 'settings-outline' as const,
+    iconColor: '#3B82F6',
+    iconBg: '#EFF6FF',
+    route: null,
+  },
+];
+
 export default function ProfileScreen() {
   const router = useRouter();
-  
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Fetch the user's data when the screen loads
   useEffect(() => {
     const fetchUserProfile = async () => {
-      // Double check that we actually have a logged-in user
       const currentUser = auth.currentUser;
-      if (!currentUser) {
-        setLoading(false);
-        return;
-      }
-
+      if (!currentUser) { setLoading(false); return; }
       try {
-        // Find the document in the 'profiles' collection that matches their UID
-        const docRef = doc(db, 'profiles', currentUser.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setProfileData(docSnap.data());
-        } else {
-          console.log("No profile found!");
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
+        const snap = await getDoc(doc(db, 'profiles', currentUser.uid));
+        if (snap.exists()) setProfileData(snap.data());
+      } catch (e) {
+        console.error('Error fetching profile:', e);
       } finally {
         setLoading(false);
       }
     };
-
     fetchUserProfile();
   }, []);
 
-  // 2. Handle Sign Out
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      // Kick them back to the Home feed as a guest once logged out
-      router.replace('/(tabs)/home'); 
+      router.replace('/(tabs)/home');
     } catch (error: any) {
-      Alert.alert("Error signing out", error.message);
+      Alert.alert('Error signing out', error.message);
     }
   };
 
-  // 3. Format the Date safely
   const getJoinedDate = () => {
     if (!profileData?.joined_at) return 'Recently';
-    // If it's a Firebase Timestamp, convert it to a readable date string
     if (profileData.joined_at.toDate) {
-      return profileData.joined_at.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      return profileData.joined_at.toDate().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
     return 'Recently';
   };
 
+  const displayName: string = profileData?.full_name || auth.currentUser?.displayName || 'ReShuk User';
+  const initials = displayName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark items-center justify-center">
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color="#0F766E" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-light dark:bg-surface-dark" edges={['top']}>
-      
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
+
       {/* Header */}
-      <View className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-surface-light dark:bg-surface-dark">
-        <Text className="text-xl font-bold text-text-primary dark:text-text-darkPrimary">
-          My Profile
+      <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8 }}>
+        <Text style={{ fontSize: 30, fontWeight: '800', color: '#0F172A', letterSpacing: -0.5 }}>
+          Profile
         </Text>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
-        
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+
         {/* User Info Card */}
-        <View className="m-5 p-6 bg-surface-cardLight dark:bg-surface-cardDark rounded-3xl border border-slate-200 dark:border-slate-800 items-center shadow-sm">
-          <View className="w-24 h-24 bg-brand-primary/10 rounded-full items-center justify-center mb-4 border-4 border-surface-light dark:border-surface-dark shadow-sm">
-            <Ionicons name="person" size={40} color="#0F766E" />
+        <View style={{
+          marginHorizontal: 20, marginTop: 10, marginBottom: 24,
+          backgroundColor: '#FFFFFF', borderRadius: 20,
+          padding: 24, alignItems: 'center',
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+          borderWidth: 1, borderColor: '#F1F5F9',
+        }}>
+          {/* Avatar */}
+          <View style={{
+            width: 80, height: 80, borderRadius: 40,
+            backgroundColor: '#0F766E',
+            alignItems: 'center', justifyContent: 'center',
+            marginBottom: 14,
+            shadowColor: '#0F766E', shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+          }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '700' }}>{initials}</Text>
           </View>
-          
-          <Text className="text-2xl font-bold text-text-primary dark:text-text-darkPrimary mb-1">
-            {profileData?.full_name || 'ReShuk User'}
+
+          <Text style={{ fontSize: 22, fontWeight: '800', color: '#0F172A', marginBottom: 4 }}>
+            {displayName}
           </Text>
-          <Text className="text-text-muted dark:text-text-darkMuted mb-4">
+          <Text style={{ fontSize: 14, color: '#94A3B8', marginBottom: 14 }}>
             {auth.currentUser?.email}
           </Text>
 
-          <View className="flex-row items-center bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full">
-            <Ionicons name="calendar-outline" size={16} color="#94A3B8" className="mr-2" />
-            <Text className="text-text-muted dark:text-text-darkMuted font-medium text-sm">
+          <View style={{
+            flexDirection: 'row', alignItems: 'center',
+            backgroundColor: '#F8FAFC', borderRadius: 50,
+            paddingHorizontal: 14, paddingVertical: 7,
+            gap: 6,
+          }}>
+            <Ionicons name="calendar-outline" size={14} color="#94A3B8" />
+            <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '600' }}>
               Joined {getJoinedDate()}
             </Text>
           </View>
         </View>
 
-        {/* Menu Options */}
-        <View className="px-5 space-y-3 mt-2">
-          
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/profile/my-listings')}
-            className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <View className="flex-row items-center">
-              <View className="w-10 h-10 bg-brand-primary/10 rounded-full items-center justify-center mr-4">
-                <Ionicons name="pricetag-outline" size={20} color="#0F766E" />
+        {/* Menu Items */}
+        <View style={{ paddingHorizontal: 20, gap: 10 }}>
+          {MENU_ITEMS.map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              onPress={() => item.route && router.push(item.route as any)}
+              activeOpacity={0.75}
+              style={{
+                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16,
+                shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+                borderWidth: 1, borderColor: '#F1F5F9',
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{
+                  width: 42, height: 42, borderRadius: 21,
+                  backgroundColor: item.iconBg,
+                  alignItems: 'center', justifyContent: 'center',
+                  marginRight: 14,
+                }}>
+                  <Ionicons name={item.icon} size={20} color={item.iconColor} />
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>{item.label}</Text>
               </View>
-              <Text className="text-text-primary dark:text-text-darkPrimary font-bold text-base">My Listings</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/profile/favorites')}
-            className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <View className="flex-row items-center">
-              <View className="w-10 h-10 bg-orange-500/10 rounded-full items-center justify-center mr-4">
-                <Ionicons name="heart-outline" size={20} color="#F97316" />
-              </View>
-              <Text className="text-text-primary dark:text-text-darkPrimary font-bold text-base">Saved Items</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-          </TouchableOpacity>
-
-          <TouchableOpacity className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <View className="flex-row items-center">
-              <View className="w-10 h-10 bg-blue-500/10 rounded-full items-center justify-center mr-4">
-                <Ionicons name="settings-outline" size={20} color="#3B82F6" />
-              </View>
-              <Text className="text-text-primary dark:text-text-darkPrimary font-bold text-base">Settings</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-          </TouchableOpacity>
-
+              <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Sign Out Button */}
-        <TouchableOpacity 
+        {/* Sign Out */}
+        <TouchableOpacity
           onPress={handleSignOut}
-          className="mx-5 mt-8 p-4 rounded-2xl items-center flex-row justify-center border-2 border-red-500/20 bg-red-500/10"
+          activeOpacity={0.75}
+          style={{
+            marginHorizontal: 20, marginTop: 28,
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+            gap: 8, paddingVertical: 15, borderRadius: 16,
+            backgroundColor: '#FFF5F5', borderWidth: 1.5, borderColor: '#FECACA',
+          }}
         >
-          <Ionicons name="log-out-outline" size={20} color="#EF4444" className="mr-2" />
-          <Text className="text-red-500 font-bold text-lg">Sign Out</Text>
+          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 16 }}>Sign Out</Text>
         </TouchableOpacity>
 
       </ScrollView>

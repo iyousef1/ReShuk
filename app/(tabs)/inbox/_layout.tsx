@@ -5,13 +5,9 @@ export default function InboxLayout() {
   return (
     <Stack>
       {/* The main list of all conversations */}
-      <Stack.Screen 
-        name="index" 
-        options={{ 
-          title: 'Messages',
-          headerLargeTitle: false,
-          headerShadowVisible: false
-        }} 
+      <Stack.Screen
+        name="index"
+        options={{ headerShown: false }}
       />
       
       {/* The actual chat room with a specific user */}

@@ -10,35 +10,78 @@ interface ListingCardProps {
     price: number | string;
     image_url: string | string[];
     category: string;
+    condition?: string;
   };
+}
+
+const CONDITION_COLORS: Record<string, string> = {
+  likenew: '#22C55E',
+  good: '#3B82F6',
+  fair: '#F97316',
+  poor: '#EF4444',
+};
+
+function getConditionColor(condition?: string) {
+  if (!condition) return null;
+  return CONDITION_COLORS[condition.toLowerCase().replace(/\s+/g, '')] ?? null;
+}
+
+function getConditionLabel(condition?: string) {
+  if (!condition) return null;
+  const key = condition.toLowerCase().replace(/\s+/g, '');
+  if (key === 'likenew') return 'Like New';
+  if (key === 'good') return 'Good';
+  if (key === 'fair') return 'Fair';
+  if (key === 'poor') return 'Poor';
+  return condition;
 }
 
 export default function ListingCard({ item }: ListingCardProps) {
   const router = useRouter();
 
-  const imageUrl = Array.isArray(item.image_url) && item.image_url.length > 0 
-    ? item.image_url[0] 
+  const imageUrl = Array.isArray(item.image_url) && item.image_url.length > 0
+    ? item.image_url[0]
     : (typeof item.image_url === 'string' ? item.image_url : 'https://color-hex.org/colors/e2e8f0.png');
 
+  const conditionColor = getConditionColor(item.condition);
+  const conditionLabel = getConditionLabel(item.condition);
+
   return (
-    <TouchableOpacity 
-      activeOpacity={0.7}
+    <TouchableOpacity
+      activeOpacity={0.85}
       onPress={() => router.push(`/home/${item.id}`)}
-      className="bg-surface-cardLight dark:bg-surface-cardDark rounded-2xl mb-4 shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden"
+      style={{
+        backgroundColor: '#FFFFFF', borderRadius: 16, marginBottom: 12,
+        overflow: 'hidden',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
+        borderWidth: 1, borderColor: '#F1F5F9',
+      }}
     >
-      <View className="aspect-square w-full bg-slate-100 dark:bg-slate-800">
-        <Image source={{ uri: imageUrl }} className="w-full h-full" resizeMode="cover" />
+      <View style={{ aspectRatio: 1, width: '100%', backgroundColor: '#F1F5F9', position: 'relative' }}>
+        <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        {conditionColor && conditionLabel && (
+          <View style={{
+            position: 'absolute', top: 8, left: 8,
+            backgroundColor: conditionColor, borderRadius: 20,
+            paddingHorizontal: 8, paddingVertical: 3,
+          }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>
+              {conditionLabel}
+            </Text>
+          </View>
+        )}
       </View>
-      <View className="p-3">
-        <Text className="text-base font-semibold text-text-primary dark:text-text-darkPrimary mb-1" numberOfLines={1}>
+      <View style={{ padding: 11 }}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: '#0F172A', marginBottom: 2 }} numberOfLines={1}>
           {item.title || 'Untitled Item'}
         </Text>
-        <Text className="text-lg font-bold text-brand-primary mb-2">
+        <Text style={{ fontSize: 16, fontWeight: '800', color: '#0F766E', marginBottom: 7 }}>
           ${item.price || 0}
         </Text>
-        <View className="flex-row items-center">
-          <Ionicons name="pricetag-outline" size={12} color="#94A3B8" />
-          <Text className="text-xs font-medium text-text-muted dark:text-text-darkMuted ml-1" numberOfLines={1}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="pricetag-outline" size={11} color="#94A3B8" />
+          <Text style={{ fontSize: 11, fontWeight: '500', color: '#94A3B8', marginLeft: 4 }} numberOfLines={1}>
             {item.category || 'Other'}
           </Text>
         </View>
