@@ -251,6 +251,22 @@ export default function AiSettingsScreen() {
             value={settings.allowAiNegotiation}
             onChange={(v) => set('allowAiNegotiation', v)}
           />
+          <SwitchRow
+            label="Let AI finalize deals"
+            hint="AI can confirm a sale when the buyer agrees to your price."
+            value={settings.allowAiDealFinalization}
+            onChange={(v) => {
+              if (!v) { set('allowAiDealFinalization', false); return; }
+              Alert.alert(
+                'Allow AI to finalize deals?',
+                'When enabled, the AI may confirm a completed sale on your behalf when a buyer agrees to your price — without waiting for your review.\n\nThis means:\n• "Great, it\'s yours!" could be sent automatically\n• You are committing to the sale the moment the buyer agrees\n• You will still need to arrange the meetup separately\n\nOnly enable this if you check your messages frequently and are comfortable with the AI making final commitments for you.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Enable', style: 'default', onPress: () => set('allowAiDealFinalization', true) },
+                ]
+              );
+            }}
+          />
         </View>
 
         {/* Safety */}

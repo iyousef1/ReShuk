@@ -18,6 +18,7 @@ export type SellerAiSettings = {
   blockOffPlatformPayment: boolean;
   flagSuspiciousMessages: boolean;
   allowAiNegotiation: boolean;
+  allowAiDealFinalization: boolean;
 };
 
 export const DEFAULT_AI_SETTINGS: SellerAiSettings = {
@@ -35,6 +36,7 @@ export const DEFAULT_AI_SETTINGS: SellerAiSettings = {
   blockOffPlatformPayment: true,
   flagSuspiciousMessages: true,
   allowAiNegotiation: false,
+  allowAiDealFinalization: false,
 };
 
 export type ListingAiInfo = {

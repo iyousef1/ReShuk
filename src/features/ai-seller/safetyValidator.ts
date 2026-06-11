@@ -13,7 +13,8 @@ const MIN_AUTO_CONFIDENCE = 0.65;
 const PHONE_REGEX = /(\+?\d[\d\s\-().]{7,}\d)/;
 const WHATSAPP_REGEX = /whats\s?app|wa\.me/i;
 const URL_REGEX = /https?:\/\/\S+|www\.\S+|\S+\.(com|net|io|me|ly|app)\/\S*/i;
-const DEAL_CONFIRMATION_REGEX = /\b(deal|sold|it'?s yours|i accept|we have an agreement|confirmed)\b/i;
+// "sold" only triggers when NOT followed by "as" (to avoid "sold as-is", "sold as parts", etc.)
+const DEAL_CONFIRMATION_REGEX = /\b(deal|it'?s yours|i accept|we have an agreement)\b|\bsold\b(?!\s+as\b)/i;
 const MEETUP_CONFIRMATION_REGEX = /\b(see you (at|on)|meet (you )?(at|on) \d|tomorrow at \d|today at \d|\d{1,2}(:\d{2})?\s?(am|pm)\b.*\b(at|in)\b)/i;
 const OFF_PLATFORM_PAYMENT_REGEX = /\b(bank transfer|wire|western union|paypal( friends)?|crypto|bitcoin|gift ?card|pay (outside|off) (the )?(app|platform)|send (me )?money first|deposit)\b/i;
 
@@ -47,8 +48,8 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
     }
   }
 
-  // 2. Reply agrees to a final deal
-  if (DEAL_CONFIRMATION_REGEX.test(reply)) {
+  // 2. Reply agrees to a final deal — only block when the seller hasn't enabled AI deal finalization
+  if (!settings.allowAiDealFinalization && DEAL_CONFIRMATION_REGEX.test(reply)) {
     reasons.push('Reply appears to confirm a final deal');
   }
 
