@@ -31,6 +31,20 @@ const MENU_ITEMS = [
     route: '/(tabs)/profile/favorites' as const,
   },
   {
+    label: 'AI Assistant',
+    icon: 'sparkles-outline' as const,
+    iconColor: '#7C3AED',
+    iconBg: '#F5F3FF',
+    route: '/(tabs)/profile/ai-settings' as const,
+  },
+  {
+    label: 'Saved Answers',
+    icon: 'chatbubble-ellipses-outline' as const,
+    iconColor: '#0F766E',
+    iconBg: '#CCFBF1',
+    route: '/(tabs)/profile/saved-answers' as const,
+  },
+  {
     label: 'Settings',
     icon: 'settings-outline' as const,
     iconColor: '#3B82F6',

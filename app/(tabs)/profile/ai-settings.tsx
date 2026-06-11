@@ -242,6 +242,17 @@ export default function AiSettingsScreen() {
           )}
         </View>
 
+        {/* Negotiation */}
+        <SectionTitle title="Price Negotiation" />
+        <View style={{ borderRadius: 14, overflow: 'hidden', marginHorizontal: 20 }}>
+          <SwitchRow
+            label="Let AI negotiate on my behalf"
+            hint="AI will counter-offer within your min/preferred price range set per listing. Requires minimum price to be set."
+            value={settings.allowAiNegotiation}
+            onChange={(v) => set('allowAiNegotiation', v)}
+          />
+        </View>
+
         {/* Safety */}
         <SectionTitle title="Safety" />
         <View style={{ borderRadius: 14, overflow: 'hidden', marginHorizontal: 20 }}>

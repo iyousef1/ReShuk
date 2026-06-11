@@ -106,6 +106,34 @@ export default function MyListingsScreen() {
               <Ionicons name="trash-outline" size={16} color="#EF4444" />
             </TouchableOpacity>
           </View>
+
+          {/* AI Assistant shortcuts */}
+          <View className="flex-row gap-2 mt-3">
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: '/(tabs)/profile/listing-ai-info',
+                  params: { listingId: item.id, listingTitle: item.title ?? '' },
+                })
+              }
+              className="flex-1 flex-row items-center justify-center gap-1 bg-brand-primary/10 rounded-full py-1.5"
+            >
+              <Ionicons name="sparkles" size={11} color="#0F766E" />
+              <Text className="text-brand-primary text-[11px] font-bold">AI Info</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: '/(tabs)/profile/saved-answers',
+                  params: { listingId: item.id, listingTitle: item.title ?? '' },
+                })
+              }
+              className="flex-1 flex-row items-center justify-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-full py-1.5"
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={11} color="#64748B" />
+              <Text className="text-text-muted dark:text-text-darkMuted text-[11px] font-bold">Q&A</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </TouchableOpacity>
     );

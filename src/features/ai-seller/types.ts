@@ -17,6 +17,7 @@ export type SellerAiSettings = {
   deliveryAreas: string[];
   blockOffPlatformPayment: boolean;
   flagSuspiciousMessages: boolean;
+  allowAiNegotiation: boolean;
 };
 
 export const DEFAULT_AI_SETTINGS: SellerAiSettings = {
@@ -33,6 +34,7 @@ export const DEFAULT_AI_SETTINGS: SellerAiSettings = {
   deliveryAreas: [],
   blockOffPlatformPayment: true,
   flagSuspiciousMessages: true,
+  allowAiNegotiation: false,
 };
 
 export type ListingAiInfo = {

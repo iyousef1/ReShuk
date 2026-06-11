@@ -6,7 +6,7 @@
 
 import { AiReplyResult, ListingAiInfo, SellerAiSettings } from './types';
 
-const MIN_AUTO_CONFIDENCE = 0.8;
+const MIN_AUTO_CONFIDENCE = 0.65;
 
 // Heuristics are intentionally conservative — a false positive just means the
 // seller has to approve a draft, a false negative could auto-send a bad reply.
@@ -34,12 +34,15 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
 
   const reply = result.reply ?? '';
 
-  // 1. Reply offers a price below the seller's minimum
+  // 1. Reply offers a sale price below the seller's minimum.
+  // Only match numbers in explicit sale-price context (currency symbols or sale verbs)
+  // so delivery fees, times, durations, percentages, etc. never trigger this check.
   if (aiInfo.minimumPrice != null) {
-    const pricesInReply = (reply.match(/\d[\d,]*(\.\d+)?/g) ?? [])
-      .map((n) => Number(n.replace(/,/g, '')))
-      .filter((n) => n > 0 && n < 1_000_000); // ignore years/phone fragments already caught elsewhere
-    if (pricesInReply.some((p) => p < aiInfo.minimumPrice!)) {
+    const SALE_PRICE_REGEX = /(?:[$₪€£¥])\s*(\d[\d,]*(?:\.\d+)?)|(\d[\d,]*(?:\.\d+)?)\s*(?:[$₪€£¥]|\b(?:ils|nis|usd|eur|gbp|shekels?|dollars?|euros?|pounds?)\b)|\b(?:price|offer(?:ing)?|accept(?:ing)?|sell(?:ing)?\s+for|take)\s+(\d[\d,]*(?:\.\d+)?)/gi;
+    const priceMatches = [...reply.matchAll(SALE_PRICE_REGEX)]
+      .map((m) => Number((m[1] || m[2] || m[3] || '0').replace(/,/g, '')))
+      .filter((n) => n > 0 && n < 1_000_000);
+    if (priceMatches.some((p) => p < aiInfo.minimumPrice!)) {
       reasons.push(`Reply mentions a price below your minimum (${aiInfo.minimumPrice})`);
     }
   }
@@ -88,20 +91,37 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
     if (result.riskLevel === 'high') flagRisk = true;
   }
 
-  // 9. The model itself asked for approval or flagged something
-  if (result.needsSellerApproval || result.action === 'ask_seller' || result.action === 'flag_risk') {
+  // 9. The model itself asked for approval or flagged something.
+  // Exception: when AI negotiation is enabled and the intent is price_negotiation,
+  // the model is instructed to set needsSellerApproval=false for counter-offers —
+  // but if it still sets it true out of caution, we override it here so auto-send works.
+  const modelRequestedApproval =
+    result.needsSellerApproval || result.action === 'ask_seller' || result.action === 'flag_risk';
+  const negotiationOverride =
+    settings.allowAiNegotiation &&
+    aiInfo.minimumPrice != null &&
+    result.intent === 'price_negotiation' &&
+    result.action !== 'flag_risk' &&
+    result.action !== 'ask_seller';
+  if (modelRequestedApproval && !negotiationOverride) {
     if (result.action === 'flag_risk') flagRisk = true;
     if (reasons.length === 0) reasons.push(result.reason || 'Model requested seller review');
   }
 
-  // 10. Intents that must never auto-send regardless of model output
+  // 10. Intents that must never auto-send regardless of model output.
+  // price_negotiation is allowed through when the seller has enabled AI negotiation
+  // AND the listing has a minimum price set (the price floor check above enforces the range).
+  // meetup_question is intentionally NOT in this set — the MEETUP_CONFIRMATION_REGEX
+  // check above already blocks replies that confirm a specific time/place. Blocking
+  // the entire intent would prevent informational replies like "yes I can meet in X area".
   const NEVER_AUTO_INTENTS = new Set([
-    'price_negotiation',
-    'meetup_question',
     'contact_request',
     'payment_question',
     'suspicious_message',
   ]);
+  if (!settings.allowAiNegotiation || aiInfo.minimumPrice == null) {
+    NEVER_AUTO_INTENTS.add('price_negotiation');
+  }
   if (NEVER_AUTO_INTENTS.has(result.intent)) {
     reasons.push(`Intent "${result.intent}" always requires seller approval`);
     if (result.intent === 'suspicious_message') flagRisk = true;
