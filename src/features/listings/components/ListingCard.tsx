@@ -11,6 +11,7 @@ interface ListingCardProps {
     image_url: string | string[];
     category: string;
     condition?: string;
+    is_ai_priced?: boolean;
   };
 }
 
@@ -46,6 +47,8 @@ export default function ListingCard({ item }: ListingCardProps) {
   const conditionColor = getConditionColor(item.condition);
   const conditionLabel = getConditionLabel(item.condition);
 
+  const isAiVerified = !!item.is_ai_priced;
+
   return (
     <TouchableOpacity
       activeOpacity={0.85}
@@ -69,6 +72,17 @@ export default function ListingCard({ item }: ListingCardProps) {
             <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>
               {conditionLabel}
             </Text>
+          </View>
+        )}
+        {isAiVerified && (
+          <View style={{
+            position: 'absolute', top: 8, right: 8,
+            backgroundColor: '#0F766E', borderRadius: 20,
+            paddingHorizontal: 7, paddingVertical: 3,
+            flexDirection: 'row', alignItems: 'center', gap: 3,
+          }}>
+            <Ionicons name="sparkles" size={9} color="#FFFFFF" />
+            <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>AI</Text>
           </View>
         )}
       </View>

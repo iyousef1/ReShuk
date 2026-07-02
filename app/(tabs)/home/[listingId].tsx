@@ -221,9 +221,184 @@ export default function ListingDetailScreen() {
           <Text className="text-lg font-bold text-text-primary dark:text-text-darkPrimary mb-2">
             Description
           </Text>
-          <Text className="text-text-secondary dark:text-text-darkSecondary text-base leading-relaxed mb-8">
+          <Text className="text-text-muted dark:text-text-darkMuted text-base leading-relaxed mb-8">
             {listing.description || 'No description provided by the seller.'}
           </Text>
+
+          {/* AI ASSESSMENT SECTION */}
+          {(() => {
+            const ai = listing.ai_info;
+            if (!ai) return null;
+            const hasContent =
+              ai.condition || ai.defects?.length || ai.includedItems?.length ||
+              ai.missingItems?.length || ai.warranty || ai.pickupAreas?.length ||
+              ai.deliveryAvailable || ai.extraNotes || ai.negotiable != null;
+            if (!hasContent) return null;
+
+            const CONDITION_STYLE: Record<string, { bg: string; text: string }> = {
+              'like new': { bg: '#DCFCE7', text: '#15803D' },
+              'likenew':  { bg: '#DCFCE7', text: '#15803D' },
+              'good':     { bg: '#DBEAFE', text: '#1D4ED8' },
+              'fair':     { bg: '#FEF3C7', text: '#B45309' },
+              'poor':     { bg: '#FEE2E2', text: '#DC2626' },
+              'new':      { bg: '#DCFCE7', text: '#15803D' },
+            };
+            const condStyle = CONDITION_STYLE[ai.condition?.toLowerCase()] ?? { bg: '#F1F5F9', text: '#475569' };
+
+            return (
+              <View style={{ marginBottom: 32 }}>
+                {/* Header */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#CCFBF1', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                    <Ionicons name="sparkles" size={14} color="#0F766E" />
+                  </View>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }} className="dark:text-text-darkPrimary">
+                    Item Details
+                  </Text>
+                  <View style={{ marginLeft: 8, backgroundColor: '#CCFBF1', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#0F766E' }}>AI VERIFIED</Text>
+                  </View>
+                </View>
+
+                <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#F1F5F9', overflow: 'hidden' }}
+                      className="dark:bg-surface-cardDark dark:border-slate-800">
+
+                  {/* Condition */}
+                  {!!ai.condition && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="shield-checkmark-outline" size={16} color="#0F766E" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Condition</Text>
+                      </View>
+                      <View style={{ backgroundColor: condStyle.bg, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: condStyle.text }}>{ai.condition}</Text>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Negotiable */}
+                  {ai.negotiable != null && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="pricetag-outline" size={16} color="#0F766E" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Price</Text>
+                      </View>
+                      <View style={{ backgroundColor: ai.negotiable ? '#DCFCE7' : '#FEE2E2', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: ai.negotiable ? '#15803D' : '#DC2626' }}>
+                          {ai.negotiable ? 'Negotiable' : 'Fixed Price'}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Delivery */}
+                  {ai.deliveryAvailable != null && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="bicycle-outline" size={16} color="#0F766E" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Delivery</Text>
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#0F172A' }} className="dark:text-text-darkPrimary">
+                        {ai.deliveryAvailable
+                          ? ai.deliveryFee != null ? `Available · ₪${ai.deliveryFee}` : 'Available'
+                          : 'Pickup only'}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Pickup areas */}
+                  {ai.pickupAreas?.length > 0 && (
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        <Ionicons name="location-outline" size={16} color="#0F766E" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Pickup Areas</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {ai.pickupAreas.map((area: string) => (
+                          <View key={area} style={{ backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}
+                                className="dark:bg-slate-800">
+                            <Text style={{ fontSize: 12, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">{area}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Included items */}
+                  {ai.includedItems?.length > 0 && (
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        <Ionicons name="checkmark-circle-outline" size={16} color="#15803D" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Included</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {ai.includedItems.map((item: string) => (
+                          <View key={item} style={{ backgroundColor: '#DCFCE7', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                            <Text style={{ fontSize: 12, fontWeight: '600', color: '#15803D' }}>{item}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Missing items */}
+                  {ai.missingItems?.length > 0 && (
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        <Ionicons name="close-circle-outline" size={16} color="#DC2626" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Not Included</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {ai.missingItems.map((item: string) => (
+                          <View key={item} style={{ backgroundColor: '#FEE2E2', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                            <Text style={{ fontSize: 12, fontWeight: '600', color: '#DC2626' }}>{item}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Defects */}
+                  {ai.defects?.length > 0 && (
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        <Ionicons name="warning-outline" size={16} color="#B45309" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Known Issues</Text>
+                      </View>
+                      {ai.defects.map((defect: string) => (
+                        <View key={defect} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
+                          <Text style={{ color: '#B45309', marginRight: 6, marginTop: 1 }}>•</Text>
+                          <Text style={{ fontSize: 13, color: '#475569', flex: 1 }} className="dark:text-text-darkMuted">{defect}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Warranty */}
+                  {!!ai.warranty && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: '#F1F5F9' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="ribbon-outline" size={16} color="#0F766E" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Warranty</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#0F172A', maxWidth: 180, textAlign: 'right' }} className="dark:text-text-darkPrimary">{ai.warranty}</Text>
+                    </View>
+                  )}
+
+                  {/* Extra notes */}
+                  {!!ai.extraNotes && (
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 13 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                        <Ionicons name="information-circle-outline" size={16} color="#0F766E" />
+                        <Text style={{ marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#475569' }} className="dark:text-text-darkMuted">Seller Note</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: '#475569', lineHeight: 20 }} className="dark:text-text-darkMuted">{ai.extraNotes}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            );
+          })()}
         </View>
       </ScrollView>
 
