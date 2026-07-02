@@ -1,4 +1,3 @@
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
@@ -15,12 +14,8 @@ import ListingAssistant, {
 
 
 async function uploadUri(uri: string, uid: string): Promise<string> {
-  const ctx = ImageManipulator.manipulate(uri);
-  ctx.resize({ width: 1280 });
-  const imageRef = await ctx.renderAsync();
-  const resized = await imageRef.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
-
-  const response = await fetch(resized.uri);
+  // URIs coming from the AI flow are already resized to 1280px during analysis — no need to resize again.
+  const response = await fetch(uri);
   const blob = await response.blob();
   const filename = `listings/${uid}/ai_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
   const storageRef = ref(storage, filename);

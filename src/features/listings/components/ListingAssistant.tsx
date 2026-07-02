@@ -44,12 +44,12 @@ export type ListingResult = {
 
 type PickedImage = { uri: string };
 
-async function resizeForApi(uri: string): Promise<{ base64: string; mediaType: string }> {
+async function resizeForApi(uri: string): Promise<{ base64: string; mediaType: string; uri: string }> {
   const ctx = ImageManipulator.manipulate(uri);
   ctx.resize({ width: 1280 });
   const imageRef = await ctx.renderAsync();
   const result = await imageRef.saveAsync({ compress: 0.8, format: SaveFormat.JPEG, base64: true });
-  return { base64: result.base64!, mediaType: 'image/jpeg' };
+  return { base64: result.base64!, mediaType: 'image/jpeg', uri: result.uri };
 }
 
 type ListingAssistantProps = {
@@ -142,13 +142,14 @@ function validateRevalueContext(text: string): string | null {
 async function analyzeImages(
   images: PickedImage[],
   opts?: { additionalContext?: string; current?: ListingResult }
-): Promise<ListingResult> {
+): Promise<{ result: ListingResult; resizedUris: string[] }> {
   const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('Image analysis is not configured. Please try again later.');
   }
 
-  // Resize all images to ≤1280px before encoding — keeps each well under the 5 MB API limit
+  // Resize all images to ≤1280px before encoding — keeps each well under the 5 MB API limit.
+  // We also cache the resized URIs so publish can upload them directly without resizing again.
   const encoded = await Promise.all(images.map((img) => resizeForApi(img.uri)));
 
   let userText = 'Analyze the item in these photos and produce a marketplace listing using the create_listing tool. Estimate the price in Israeli Shekels (ILS).';
@@ -217,10 +218,9 @@ async function analyzeImages(
   }
 
   const raw = toolUse.input as ListingResult;
-  // Normalize AI condition enum to display strings
   raw.condition = AI_CONDITION_MAP[raw.condition] ?? raw.condition;
   if (!raw.attributes) raw.attributes = {};
-  return raw;
+  return { result: raw, resizedUris: encoded.map((e) => e.uri) };
 }
 
 function PriceSlider({
@@ -337,6 +337,7 @@ const inputClass =
 
 export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
   const [images, setImages] = useState<PickedImage[]>([]);
+  const [resizedUris, setResizedUris] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [form, setForm] = useState<ListingResult | null>(null);
@@ -418,8 +419,9 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
     setStatus('loading');
     setErrorMsg('');
     try {
-      const result = await analyzeImages(images);
+      const { result, resizedUris: uris } = await analyzeImages(images);
       setForm(result);
+      setResizedUris(uris);
       setStatus('done');
     } catch (e: any) {
       setErrorMsg(e?.message ?? 'Something went wrong. Please try again.');
@@ -429,6 +431,7 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
 
   const reset = () => {
     setImages([]);
+    setResizedUris([]);
     setForm(null);
     setStatus('idle');
     setErrorMsg('');
@@ -441,11 +444,12 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
     setRevalueVisible(false);
     setRevaluing(true);
     try {
-      const result = await analyzeImages(images, {
+      const { result, resizedUris: uris } = await analyzeImages(images, {
         additionalContext: revalueContext,
         current: form ?? undefined,
       });
       setForm(result);
+      setResizedUris(uris);
       setRevalueContext('');
     } catch (e: any) {
       setErrorMsg(e?.message ?? 'Something went wrong. Please try again.');
@@ -924,7 +928,7 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
             <Ionicons name="refresh-outline" size={20} color="#64748B" />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => onPublish?.(form, images.map((i) => i.uri), location)}
+            onPress={() => onPublish?.(form, resizedUris.length ? resizedUris : images.map((i) => i.uri), location)}
             className="flex-1 py-4 rounded-2xl bg-brand-primary items-center justify-center flex-row"
           >
             <Ionicons name="rocket-outline" size={20} color="#fff" />
