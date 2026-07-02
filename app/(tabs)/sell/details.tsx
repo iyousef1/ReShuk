@@ -21,6 +21,7 @@ import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { auth, db, storage } from '../../../src/lib/firebase';
 
 import { CATEGORY_CONFIG } from '../../../src/features/listings/categoryConfig';
+import CityPicker from '../../../src/components/ui/CityPicker';
 
 export default function SellDetailsScreen() {
   const router = useRouter();
@@ -202,21 +203,7 @@ export default function SellDetailsScreen() {
             <Text className="text-xs font-bold text-text-muted dark:text-text-darkMuted mb-1 uppercase tracking-wider">
               Location
             </Text>
-            <View className="relative justify-center">
-              <Ionicons
-                name="location-outline"
-                size={20}
-                color="#94A3B8"
-                className="absolute left-4 z-10"
-              />
-              <TextInput
-                value={location}
-                onChangeText={setLocation}
-                placeholder="e.g., Jerusalem"
-                placeholderTextColor="#94A3B8"
-                className="bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-xl pl-11 pr-4 py-3 text-text-primary dark:text-text-darkPrimary text-base"
-              />
-            </View>
+            <CityPicker value={location} onChange={setLocation} />
           </View>
 
           {/* Description */}

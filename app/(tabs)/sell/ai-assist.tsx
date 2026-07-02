@@ -75,6 +75,8 @@ export default function AiAssistScreen() {
         seller_id: auth.currentUser.uid,
         status: 'active',
         is_ai_priced: true,
+        ai_confidence: listing.confidence,
+        ai_confidence_reason: listing.confidence !== 'high' ? (listing.confidence_reason ?? null) : null,
         search_terms: [...new Set(searchTerms)],
         created_at: serverTimestamp(),
       });

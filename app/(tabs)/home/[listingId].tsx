@@ -225,6 +225,20 @@ export default function ListingDetailScreen() {
             {listing.description || 'No description provided by the seller.'}
           </Text>
 
+          {/* AI CONFIDENCE NOTE */}
+          {listing.is_ai_priced && listing.ai_confidence_reason && (
+            <View style={{
+              flexDirection: 'row', alignItems: 'flex-start',
+              backgroundColor: '#FEFCE8', borderWidth: 1, borderColor: '#FEF08A',
+              borderRadius: 14, padding: 14, marginBottom: 20,
+            }}>
+              <Ionicons name="information-circle-outline" size={18} color="#CA8A04" style={{ marginTop: 1 }} />
+              <Text style={{ flex: 1, marginLeft: 10, fontSize: 13, color: '#854D0E', lineHeight: 20 }}>
+                {listing.ai_confidence_reason}
+              </Text>
+            </View>
+          )}
+
           {/* AI ASSESSMENT SECTION */}
           {(() => {
             const ai = listing.ai_info;

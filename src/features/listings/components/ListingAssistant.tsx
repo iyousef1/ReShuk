@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { CATEGORY_CONFIG } from '../categoryConfig';
+import CityPicker from '../../../components/ui/CityPicker';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -858,21 +859,7 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
         </Field>
 
         <Field label="Location">
-          <View className="relative justify-center">
-            <Ionicons
-              name="location-outline"
-              size={18}
-              color="#94A3B8"
-              style={{ position: 'absolute', left: 14, zIndex: 1 }}
-            />
-            <TextInput
-              value={location}
-              onChangeText={setLocation}
-              placeholder="e.g. Jerusalem"
-              placeholderTextColor="#94A3B8"
-              className={`${inputClass} pl-10`}
-            />
-          </View>
+          <CityPicker value={location} onChange={setLocation} />
         </Field>
 
         <Field label="Description">
