@@ -71,7 +71,7 @@ export default function HomeScreen() {
           await setDoc(doc(db, 'profiles', uid, 'notifications', `price_drop_${savedDoc.id}`), {
             type: 'price_drop',
             title: 'Price Drop!',
-            body: `"${listing.title}" dropped from $${saved.price} to $${listing.price}`,
+            body: `"${listing.title}" dropped from ₪${saved.price} to ₪${listing.price}`,
             listingId: savedDoc.id,
             imageUrl: Array.isArray(listing.image_url) ? listing.image_url[0] : listing.image_url ?? null,
             read: false,

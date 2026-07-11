@@ -207,7 +207,7 @@ export default function SearchScreen() {
   const renderHeader = () => (
     <View>
       {/* Sort + count row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 }}>
         <Text style={{ fontSize: 13, color: MUTED, fontWeight: '600' }}>
           {phase === 'loading' ? 'Searching…' : `${results.length}${hasMore ? '+' : ''} result${results.length !== 1 ? 's' : ''}`}
         </Text>
@@ -305,112 +305,109 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BG }} edges={['top']}>
-      {/* Header */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14, backgroundColor: BG }}>
-        <Text style={{ fontSize: 30, fontWeight: '800', color: TEAL, letterSpacing: -0.5, marginBottom: 14 }}>
-          Discover
-        </Text>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {/* Search input */}
-          <View style={{
-            flex: 1, flexDirection: 'row', alignItems: 'center',
-            backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: BORDER,
-            borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13,
-            shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
-          }}>
-            <Ionicons name="search-outline" size={20} color={MUTED} />
-            <TextInput
-              value={queryInput}
-              onChangeText={setQueryInput}
-              onSubmitEditing={handleSubmitSearch}
-              placeholder="Search title, brand, category…"
-              placeholderTextColor={MUTED}
-              returnKeyType="search"
-              accessibilityLabel="Search listings"
-              style={{
-                flex: 1, marginLeft: 10, fontSize: 15, color: INK,
-                textAlign: rtl ? 'right' : 'left',
-                writingDirection: rtl ? 'rtl' : 'ltr',
-              }}
-            />
-            {queryInput.length > 0 && (
-              <TouchableOpacity onPress={() => setQueryInput('')} accessibilityRole="button" accessibilityLabel="Clear search">
-                <Ionicons name="close-circle" size={20} color={MUTED} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Filter button */}
-          <TouchableOpacity
-            onPress={() => setShowFilters(true)}
-            accessibilityRole="button"
-            accessibilityLabel={`Filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top']}>
+      {/* Header — compact eBay-style search bar */}
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10,
+        backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: BORDER,
+      }}>
+        {/* Search input */}
+        <View style={{
+          flex: 1, flexDirection: 'row', alignItems: 'center',
+          backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: BORDER,
+          borderRadius: 10, paddingHorizontal: 12, height: 40,
+        }}>
+          <Ionicons name="search-outline" size={19} color={MUTED} />
+          <TextInput
+            value={queryInput}
+            onChangeText={setQueryInput}
+            onSubmitEditing={handleSubmitSearch}
+            placeholder="Search for anything"
+            placeholderTextColor={MUTED}
+            returnKeyType="search"
+            accessibilityLabel="Search listings"
             style={{
-              position: 'relative', width: 48, height: 48,
-              backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: BORDER,
-              borderRadius: 14, alignItems: 'center', justifyContent: 'center',
-              shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+              flex: 1, marginLeft: 8, fontSize: 15, color: INK, paddingVertical: 0,
+              textAlign: rtl ? 'right' : 'left',
+              writingDirection: rtl ? 'rtl' : 'ltr',
             }}
-          >
-            <Ionicons name="options-outline" size={22} color={activeFilterCount > 0 ? TEAL : MUTED} />
-            {activeFilterCount > 0 && (
-              <View style={{
-                position: 'absolute', top: -5, right: -5,
-                width: 18, height: 18, borderRadius: 9,
-                backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>{activeFilterCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          />
+          {queryInput.length > 0 && (
+            <TouchableOpacity onPress={() => setQueryInput('')} accessibilityRole="button" accessibilityLabel="Clear search">
+              <Ionicons name="close-circle" size={19} color={MUTED} />
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Filter button */}
+        <TouchableOpacity
+          onPress={() => setShowFilters(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}
+          style={{
+            position: 'relative', width: 40, height: 40,
+            backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: BORDER,
+            borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="options-outline" size={20} color={activeFilterCount > 0 ? TEAL : INK} />
+          {activeFilterCount > 0 && (
+            <View style={{
+              position: 'absolute', top: -5, right: -5,
+              width: 18, height: 18, borderRadius: 9,
+              backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>{activeFilterCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Category Pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12 }}
-      >
-        {CATEGORY_PILLS.map((cat) => {
-          const isActive = (cat.name === 'All' && !filters.category) || filters.category === cat.name;
-          return (
-            <TouchableOpacity
-              key={cat.name}
-              onPress={() => handleSelectCategory(cat.name)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
-              style={{
-                flexDirection: 'row', alignItems: 'center',
-                paddingHorizontal: 14, paddingVertical: 9,
-                borderRadius: 50, marginRight: 10,
-                backgroundColor: isActive ? TEAL : '#FFFFFF',
-                borderWidth: 1.5, borderColor: isActive ? TEAL : BORDER,
-              }}
-            >
-              <Ionicons
-                name={isActive ? activeIcon(cat.icon) : cat.icon}
-                size={14}
-                color={isActive ? '#FFFFFF' : '#64748B'}
-              />
-              <Text style={{ marginLeft: 6, fontWeight: '600', fontSize: 13, color: isActive ? '#FFFFFF' : '#475569' }}>
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      <View style={{ backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: BORDER }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10 }}
+        >
+          {CATEGORY_PILLS.map((cat) => {
+            const isActive = (cat.name === 'All' && !filters.category) || filters.category === cat.name;
+            return (
+              <TouchableOpacity
+                key={cat.name}
+                onPress={() => handleSelectCategory(cat.name)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+                style={{
+                  flexDirection: 'row', alignItems: 'center',
+                  paddingHorizontal: 13, paddingVertical: 7,
+                  borderRadius: 50, marginRight: 8,
+                  backgroundColor: isActive ? TEAL : '#F1F5F9',
+                  borderWidth: 1, borderColor: isActive ? TEAL : BORDER,
+                }}
+              >
+                <Ionicons
+                  name={isActive ? activeIcon(cat.icon) : cat.icon}
+                  size={14}
+                  color={isActive ? '#FFFFFF' : '#64748B'}
+                />
+                <Text style={{ marginLeft: 6, fontWeight: '600', fontSize: 13, color: isActive ? '#FFFFFF' : '#475569' }}>
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* Active filter chips */}
       {chips.length > 0 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, alignItems: 'center', gap: 8 }}
+          style={{ flexGrow: 0, backgroundColor: BG }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', gap: 8 }}
         >
           {chips.map((chip) => (
             <TouchableOpacity
@@ -435,7 +432,7 @@ export default function SearchScreen() {
       )}
 
       {/* Content */}
-      <View style={{ flex: 1 }}>{renderContent()}</View>
+      <View style={{ flex: 1, backgroundColor: BG }}>{renderContent()}</View>
 
       {/* Sort Modal */}
       <Modal visible={showSort} transparent animationType="fade" onRequestClose={() => setShowSort(false)}>

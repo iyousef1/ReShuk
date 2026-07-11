@@ -94,7 +94,7 @@ function WantedPostCard({ post, onPress }: { post: WantedPost; onPress: () => vo
             </View>
             {post.max_budget != null && (
               <View style={{ backgroundColor: '#F0FDF4', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 }}>
-                <Text style={{ color: '#16A34A', fontSize: 12, fontWeight: '600' }}>Budget: ${post.max_budget}</Text>
+                <Text style={{ color: '#16A34A', fontSize: 12, fontWeight: '600' }}>Budget: ₪{post.max_budget}</Text>
               </View>
             )}
           </View>

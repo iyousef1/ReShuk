@@ -14,7 +14,8 @@ import ListingAssistant, {
 
 
 async function uploadUri(uri: string, uid: string): Promise<string> {
-  // URIs coming from the AI flow are already resized to 1280px during analysis — no need to resize again.
+  // URIs coming from the AI flow are already resized to ≤1568px at high quality during
+  // analysis (see resizeForApi) — no need to resize again; we reuse those high-quality files.
   const response = await fetch(uri);
   const blob = await response.blob();
   const filename = `listings/${uid}/ai_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;

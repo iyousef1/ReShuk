@@ -44,11 +44,39 @@ export type ListingResult = {
 
 type PickedImage = { uri: string };
 
+// Anthropic vision downscales anything larger than 1568px on the long edge, so we
+// cap exactly there and keep JPEG quality high (0.92). Aggressive downscaling +
+// low quality erases faint, low-contrast detail — screen burn-in, hairline
+// scratches, dead pixels — which is exactly what condition assessment depends on.
+const MAX_IMAGE_EDGE = 1568;
+const IMAGE_QUALITY = 0.92;
+
+async function getImageSize(uri: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    Image.getSize(uri, (width, height) => resolve({ width, height }), reject);
+  });
+}
+
 async function resizeForApi(uri: string): Promise<{ base64: string; mediaType: string; uri: string }> {
   const ctx = ImageManipulator.manipulate(uri);
-  ctx.resize({ width: 1280 });
+
+  // Only downscale when the image is larger than the model's max edge — never
+  // upscale (that just adds blur). Resize along whichever edge is longer so both
+  // dimensions end up ≤ MAX_IMAGE_EDGE and no server-side re-compression kicks in.
+  try {
+    const { width, height } = await getImageSize(uri);
+    const longEdge = Math.max(width, height);
+    if (longEdge > MAX_IMAGE_EDGE) {
+      if (width >= height) ctx.resize({ width: MAX_IMAGE_EDGE });
+      else ctx.resize({ height: MAX_IMAGE_EDGE });
+    }
+  } catch {
+    // If dimensions can't be read, fall back to a safe long-edge cap on width.
+    ctx.resize({ width: MAX_IMAGE_EDGE });
+  }
+
   const imageRef = await ctx.renderAsync();
-  const result = await imageRef.saveAsync({ compress: 0.8, format: SaveFormat.JPEG, base64: true });
+  const result = await imageRef.saveAsync({ compress: IMAGE_QUALITY, format: SaveFormat.JPEG, base64: true });
   return { base64: result.base64!, mediaType: 'image/jpeg', uri: result.uri };
 }
 
@@ -72,14 +100,47 @@ Identify the item, assess its physical condition strictly from what is visible i
 Always call the create_listing tool with your best assessment.
 
 Guidelines:
+- LANGUAGE: Write ALL text output — title, description, condition_details, key_specs, brand, model, and every attribute value — in ENGLISH only. This applies even when text in the photos (menus, UI, labels, packaging) is in Hebrew, Arabic, or another language: translate or transliterate it to English. Never output non-English text.
+- EXTRACT EVERYTHING VISIBLE (do this first): Read the photos closely and pull out every concrete, verifiable fact shown — do not wait for the seller to tell you. Look for and use: brand names, logos, and model numbers/names printed on the item or its packaging; on-screen information (a phone/laptop settings or "About" screen showing storage, RAM, model number, or OS; a smartwatch face; a TV or camera menu); size, care, and material labels on clothing and shoes; capacity, wattage, voltage, or dimensions printed on appliances and tools; title, author, or edition on books; trim badges, odometer, or year on vehicles; spec/serial plates and engravings; and any other legible text. Use these observed facts to identify the exact item and to fill brand, model, key_specs, and attributes accurately.
+- ACCURACY: Prefer what is actually visible over assumptions. State a fact only if you can see it in a photo or are highly confident from the clearly identified model. If text is blurry, partial, or ambiguous, do not guess a precise value — leave it out and lower confidence. Never invent specs, capacities, sizes, or model names.
+- PRIVACY: You may READ serial numbers, IMEI, VIN, license plates, names, or other personal/identifying data to help identify the item, but NEVER copy them into the title, description, key_specs, or attributes. Keep the public listing free of personal or traceable identifiers.
 - Base condition ONLY on visible evidence (scratches, wear, packaging, screen state). Do not assume hidden damage or perfect condition.
-- Price for the Israeli second-hand market in ILS. low = quick-sale price, suggested = fair market price, high = optimistic but achievable.
+- SCREENS — inspect closely: If any photo shows a powered-on display (phone, tablet, laptop, monitor, TV, smartwatch), examine it carefully for defects: OLED/LCD burn-in or image retention (faint, permanent ghosting of icons, keyboard, navigation bar, or status bar — usually only visible against a uniform light/white background), dead or stuck pixels, discoloration, uneven backlight, lines, or cracks. Burn-in is subtle and easy to overlook — look for it deliberately. Any such defect materially lowers value: describe it in condition_details, set condition no higher than "fair" (or "poor" if severe), and reduce the price accordingly.
+- If a device has a screen but NO photo shows that screen displaying a solid light/white background, you cannot rule out burn-in or retention. Say so in confidence_reason, keep confidence at "medium" or lower, and do not assume the screen is flawless.
+- PRICING METHOD — reason it through before setting numbers; do NOT just apply a flat percentage:
+  1. ANCHOR: estimate what this item costs NEW in Israel today in ILS (its current retail price, or its last new price if discontinued).
+  2. DEPRECIATE from that anchor using the factors that actually drive used value:
+     • Category — fast-depreciating consumer electronics (phones, laptops, tablets, audio) typically resell for ~35–60% of new; value-holding goods (quality furniture, power tools, musical instruments, designer/luxury) ~55–80%; fashion varies widely by brand.
+     • Generation/age — if a newer model has superseded this one, discount further; older electronics drop steeply each generation.
+     • Condition & defects — apply the visible condition AND any defects you found (screen burn-in, cracks, heavy wear) as a further, sometimes deep, reduction.
+     • Completeness — missing box/charger/accessories lowers value; sealed/complete raises it.
+     • Demand — common, easily-found items sell lower; scarce or sought-after items hold price.
+  3. SANITY-CHECK against what a real buyer on an Israeli second-hand marketplace (Yad2 / Facebook Marketplace style) would actually PAY today — not the inflated price sellers optimistically ask.
+- PRICE POINTS (in ILS):
+  • suggested = the price this item would realistically sell for within about two weeks in its actual condition — grounded and achievable, NOT an aspirational asking price. This is the number that gets published, so keep it honest.
+  • low = quick-sale price to move it within a few days.
+  • high = best case: a patient seller and an ideal buyer.
+- UNCERTAINTY BIAS: when you are unsure of the exact model, specs, or local market, price toward the LOWER half of your range. An overpriced listing simply won't sell and the seller can always raise it, so erring low costs less than erring high.
 - If the photos are blurry, partial, or the item is ambiguous, set confidence to "low" or "medium" and explain why in confidence_reason. Still provide your best guess.
-- key_specs: 2-5 short factual specs you can reasonably infer (e.g. "256GB storage", "Space Gray", "13-inch").
-- Keep the title concise and search-friendly. The description must be 2-3 honest, neutral sentences.
+- key_specs: 2-5 short factual specs, built from the details you extracted (e.g. "256GB storage", "12GB RAM", "6.8-inch display", "Size L", "1.8L capacity"). Prefer specs you actually observed in the photos.
+- TITLE: concise, specific, and search-friendly — assembled from the accurate details you extracted, typically brand + model + the one spec buyers care most about (e.g. "Samsung Galaxy S22 Ultra 256GB", "Nike Air Max 90 — Size 42", "IKEA Malm Desk, White"). Include a distinguishing spec only when you are confident of it; otherwise keep it simpler. Do not pad with condition words unless notable.
+- DESCRIPTION: 2-3 honest, neutral sentences in English that naturally weave in the concrete extracted details (key specs, what's included, notable condition or defects). Factual and specific, never salesy or exaggerated. Only state details you actually determined.
 - For category, choose one of: Electronics, Fashion, Home, Sports, Toys, Vehicles, Books, Other.
 - For sub_category, pick the most specific one for the chosen category:
-${CATEGORY_CONFIG.map((c) => `  ${c.name}: ${c.subCategories.map((s) => s.name).join(', ')}`).join('\n')}`;
+${CATEGORY_CONFIG.map((c) => `  ${c.name}: ${c.subCategories.map((s) => s.name).join(', ')}`).join('\n')}
+
+ATTRIBUTES — fill in as many as you can:
+Populate the "attributes" map with EVERY attribute below (for your chosen category) that you can confidently determine from the photos or from well-known specs of the identified model. The more you fill in, the better the listing. Use the EXACT key shown, and for fixed-option attributes use one of the EXACT allowed values (case-sensitive, English). Omit any attribute you cannot determine — never guess or invent a value. For a widely-known product you may infer standard specs (e.g. a specific phone model's default color options or a laptop's typical RAM) only when the photos clearly identify that exact model; otherwise leave it out.
+${CATEGORY_CONFIG.map((c) => {
+  const attrs = c.attributes.filter((a) => a.key !== 'condition' && a.key !== 'model');
+  if (attrs.length === 0) return `  ${c.name}: (none)`;
+  const parts = attrs.map((a) =>
+    a.options
+      ? `${a.key} (one of: ${a.options.map((o) => o.value).join(', ')})`
+      : `${a.key} (free text${a.placeholder ? `, e.g. ${a.placeholder}` : ''})`,
+  );
+  return `  ${c.name}: ${parts.join('; ')}`;
+}).join('\n')}`;
 
 const LISTING_TOOL = {
   name: 'create_listing',
@@ -110,8 +171,14 @@ const LISTING_TOOL = {
         },
         required: ['low', 'suggested', 'high'],
       },
-      description: { type: 'string', description: '2-3 sentence listing description.' },
+      description: { type: 'string', description: '2-3 sentence listing description, in English.' },
       key_specs: { type: 'array', items: { type: 'string' } },
+      attributes: {
+        type: 'object',
+        description:
+          'Category-specific attributes inferred from the photos (e.g. color, storage, ram, size, material, gender, year). Use the exact keys and allowed values from the ATTRIBUTES guide in the system prompt. Include every attribute you can confidently determine and omit the rest. All values in English.',
+        additionalProperties: { type: 'string' },
+      },
       confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
       confidence_reason: { type: 'string' },
     },
@@ -505,6 +572,7 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
               'Good lighting shows details clearly',
               'Multiple angles = more accurate estimate',
               'Include any damage or wear',
+              'For phones & screens, add one photo of the screen on a white background',
             ].map((tip) => (
               <View key={tip} className="flex-row items-center mb-2">
                 <Ionicons name="checkmark-circle" size={16} color="#0F766E" />

@@ -87,7 +87,7 @@ export default function FavoritesScreen() {
           >
             {item.title || 'Untitled'}
           </Text>
-          <Text className="text-brand-primary font-bold text-base mb-2">${item.price}</Text>
+          <Text className="text-brand-primary font-bold text-base mb-2">₪{item.price}</Text>
           <View className="flex-row items-center justify-between">
             <View className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
               <Text className="text-text-muted dark:text-text-darkMuted text-[10px] font-semibold">

@@ -88,7 +88,7 @@ export default function ListingCard({ item }: ListingCardProps) {
           {item.title || 'Untitled Item'}
         </Text>
         <Text style={{ fontSize: 16, fontWeight: '800', color: '#0F766E', marginBottom: 7 }}>
-          ${item.price || 0}
+          ₪{item.price || 0}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="pricetag-outline" size={11} color="#94A3B8" />

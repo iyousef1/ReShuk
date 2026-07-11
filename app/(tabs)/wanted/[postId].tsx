@@ -99,7 +99,7 @@ function MatchedListingCard({
         >
           {item.title}
         </Text>
-        <Text className="text-brand-primary font-bold text-base">${item.price}</Text>
+        <Text className="text-brand-primary font-bold text-base">₪{item.price}</Text>
         <View className="flex-row items-center mt-1">
           <Ionicons name="location-outline" size={11} color="#94A3B8" />
           <Text className="text-text-muted dark:text-text-darkMuted text-[11px] ml-0.5" numberOfLines={1}>
@@ -266,7 +266,7 @@ export default function WantedDetailScreen() {
           {post.max_budget != null && (
             <View className="bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
               <Text className="text-green-700 dark:text-green-400 text-xs font-semibold">
-                Budget: up to ${post.max_budget}
+                Budget: up to ₪{post.max_budget}
               </Text>
             </View>
           )}

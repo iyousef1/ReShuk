@@ -227,7 +227,7 @@ export default function ListingDetailScreen() {
               )}
             </View>
             <Text className="text-3xl font-extrabold text-brand-primary">
-              ${listing.price}
+              ₪{listing.price}
             </Text>
           </View>
 
