@@ -9,7 +9,8 @@ import { CATEGORY_CONFIG, CategoryConfig } from '../../../src/features/listings/
 export default function SellCategoryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const safeImageUri = Array.isArray(params.imageUri) ? params.imageUri[0] : params.imageUri;
+  // imageUri may be a comma-joined list of encoded URIs — pass it through unchanged
+  const safeImageUri = Array.isArray(params.imageUri) ? params.imageUri.join(',') : params.imageUri;
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
 

@@ -20,6 +20,8 @@ import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { auth, db, storage } from '../../../src/lib/firebase';
 
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+
 import { CATEGORY_CONFIG } from '../../../src/features/listings/categoryConfig';
 import CityPicker from '../../../src/components/ui/CityPicker';
 
@@ -32,8 +34,8 @@ export default function SellDetailsScreen() {
   const rawCategory = Array.isArray(params.category) ? params.category[0] : params.category;
   const rawSubCategory = Array.isArray(params.subCategory) ? params.subCategory[0] : params.subCategory;
 
-  // DECODE the image URL back to normal so the phone can read the file path
-  const imageUri = rawImageUri ? decodeURIComponent(rawImageUri) : null;
+  // DECODE the image URLs back to normal so the phone can read the file paths
+  const images = rawImageUri ? rawImageUri.split(',').map((uri) => decodeURIComponent(uri)) : [];
   const category = rawCategory ?? '';
   const subCategory = rawSubCategory ?? '';
 
@@ -65,17 +67,36 @@ export default function SellDetailsScreen() {
     setAttributes((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handlePriceChange = (text: string) => {
+    // Strip anything that isn't a digit or a decimal point, and collapse extra decimal points
+    const cleaned = text.replace(/[^0-9.]/g, '');
+    const [whole, ...rest] = cleaned.split('.');
+    setPrice(rest.length > 0 ? `${whole}.${rest.join('')}` : whole);
+  };
+
   const uploadImageAsync = async (uri: string) => {
-    const response = await fetch(uri);
+    // Downscale before upload — listings only ever display as small thumbnails,
+    // so a full-resolution camera photo (often 3000px+) just slows the upload down.
+    const t0 = Date.now();
+    const rendered = await ImageManipulator.manipulate(uri).resize({ width: 1200 }).renderAsync();
+    const manipulated = await rendered.saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
+    const t1 = Date.now();
+
+    const response = await fetch(manipulated.uri);
     const blob = await response.blob();
+    const t2 = Date.now();
+    console.log(`[upload timing] resize=${t1 - t0}ms fetch+blob=${t2 - t1}ms size=${(blob.size / 1024).toFixed(0)}KB`);
+
     const filename = `listings/${auth.currentUser!.uid}/item_${Date.now()}.jpg`;
     const storageRef = ref(storage, filename);
     await uploadBytes(storageRef, blob);
+    const t3 = Date.now();
+    console.log(`[upload timing] uploadBytes=${t3 - t2}ms`);
     return await getDownloadURL(storageRef);
   };
 
   const handlePublish = async () => {
-    if (!title || !price || !location || !imageUri) {
+    if (!title || !price || !location || images.length === 0) {
       Alert.alert('Missing Info', 'Please fill out all required fields.');
       return;
     }
@@ -89,7 +110,7 @@ export default function SellDetailsScreen() {
     setIsSubmitting(true);
 
     try {
-      const uploadedImageUrl = await uploadImageAsync(imageUri as string);
+      const uploadedImageUrls = await Promise.all(images.map((uri) => uploadImageAsync(uri)));
       const newListingRef = doc(collection(db, 'listings'));
 
       // Generate search terms from title
@@ -118,7 +139,7 @@ export default function SellDetailsScreen() {
         condition: condition,
         color: color,
         attributes: attributes,
-        image_url: [uploadedImageUrl],
+        image_url: uploadedImageUrls,
         seller_id: auth.currentUser.uid,
         status: 'active',
         is_ai_priced: false,
@@ -145,22 +166,30 @@ export default function SellDetailsScreen() {
       >
         <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
 
-          {/* Image + Category Preview Card */}
-          <View className="flex-row items-center bg-surface-cardLight dark:bg-surface-cardDark p-3 rounded-2xl mb-6 border border-slate-200 dark:border-slate-800 shadow-sm">
-            {imageUri ? (
-              <Image source={{ uri: imageUri as string }} className="w-16 h-16 rounded-xl" />
-            ) : (
-              <View className="w-16 h-16 bg-slate-200 dark:bg-slate-800 rounded-xl items-center justify-center">
-                <Ionicons name="image-outline" size={24} color="#94A3B8" />
-              </View>
-            )}
-            <View className="ml-4 flex-1">
+          {/* Images + Category Preview Card */}
+          <View className="bg-surface-cardLight dark:bg-surface-cardDark p-3 rounded-2xl mb-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {images.length > 0 ? (
+                images.map((uri, index) => (
+                  <Image
+                    key={uri}
+                    source={{ uri }}
+                    className={`w-16 h-16 rounded-xl ${index < images.length - 1 ? 'mr-2' : ''}`}
+                  />
+                ))
+              ) : (
+                <View className="w-16 h-16 bg-slate-200 dark:bg-slate-800 rounded-xl items-center justify-center">
+                  <Ionicons name="image-outline" size={24} color="#94A3B8" />
+                </View>
+              )}
+            </ScrollView>
+            <View className="mt-3 flex-row items-center">
               <Text className="text-text-primary dark:text-text-darkPrimary font-bold">
-                Selected Image
+                {images.length} {images.length === 1 ? 'Photo' : 'Photos'} Selected
               </Text>
-              <Text className="text-brand-primary text-sm font-medium">{category}</Text>
+              <Text className="text-brand-primary text-sm font-medium ml-2">{category}</Text>
               {subCategory ? (
-                <View className="mt-1 self-start bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                <View className="ml-2 self-start bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
                   <Text className="text-xs text-text-muted dark:text-text-darkMuted font-medium">
                     {subCategory}
                   </Text>
@@ -185,11 +214,11 @@ export default function SellDetailsScreen() {
             </View>
             <View className="w-1/3">
               <Text className="text-xs font-bold text-text-muted dark:text-text-darkMuted mb-1 uppercase tracking-wider">
-                Price ($)
+                Price (₪)
               </Text>
               <TextInput
                 value={price}
-                onChangeText={setPrice}
+                onChangeText={handlePriceChange}
                 placeholder="0.00"
                 keyboardType="numeric"
                 placeholderTextColor="#94A3B8"

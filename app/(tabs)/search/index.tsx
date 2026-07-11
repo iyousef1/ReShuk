@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Keyboard,
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -14,26 +15,58 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import ListingCard from '../../../src/features/listings/components/ListingCard';
-import { CATEGORY_CONFIG, COLORS } from '../../../src/features/listings/categoryConfig';
+import CityPicker from '../../../src/components/ui/CityPicker';
+import {
+  CATEGORY_CONFIG,
+  COLORS,
+  type CategoryConfig,
+} from '../../../src/features/listings/categoryConfig';
 
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { auth, db } from '../../../src/lib/firebase';
+import { useSearch } from '../../../src/features/search/useSearch';
+import {
+  countActiveFilters,
+  EMPTY_FILTERS,
+  SORT_LABELS,
+  type DatePreset,
+  type RecentSearch,
+  type SearchFilters,
+  type SortOption,
+  type StatusFilter,
+} from '../../../src/features/search/types';
+import {
+  addRecentSearch,
+  clearRecentSearches,
+  loadRecentSearches,
+  removeRecentSearch,
+} from '../../../src/features/search/recentSearches';
 
-const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Home', 'Sports', 'Toys', 'Vehicles', 'Books', 'Other'];
+// ---- Design tokens (match the rest of the app) ----
+const TEAL = '#0F766E';
+const BG = '#F8FAFC';
+const BORDER = '#E2E8F0';
+const MUTED = '#94A3B8';
+const INK = '#0F172A';
 
-const CATEGORY_ICONS: Record<string, { icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }> = {
-  All:         { icon: 'grid-outline',           activeIcon: 'grid' },
-  Electronics: { icon: 'phone-portrait-outline', activeIcon: 'phone-portrait' },
-  Fashion:     { icon: 'shirt-outline',          activeIcon: 'shirt' },
-  Home:        { icon: 'home-outline',           activeIcon: 'home' },
-  Sports:      { icon: 'football-outline',       activeIcon: 'football' },
-  Toys:        { icon: 'happy-outline',          activeIcon: 'happy' },
-  Vehicles:    { icon: 'car-outline',            activeIcon: 'car' },
-  Books:       { icon: 'book-outline',           activeIcon: 'book' },
-  Other:       { icon: 'cube-outline',           activeIcon: 'cube' },
-};
+// Category list is derived from CATEGORY_CONFIG — no duplicate list.
+const CATEGORY_PILLS: { name: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { name: 'All', icon: 'grid-outline' },
+  ...CATEGORY_CONFIG.map((c) => ({ name: c.name, icon: c.icon as keyof typeof Ionicons.glyphMap })),
+];
 
-const CONDITION_OPTIONS = ['New', 'Like New', 'Good', 'Fair', 'Parts Only'];
+const SORT_OPTIONS: SortOption[] = ['relevance', 'newest', 'oldest', 'price_asc', 'price_desc'];
+
+const DATE_OPTIONS: { value: DatePreset; label: string }[] = [
+  { value: '', label: 'Any time' },
+  { value: '24h', label: 'Last 24h' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+];
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'available', label: 'Available' },
+  { value: 'sold', label: 'Sold' },
+  { value: 'all', label: 'All' },
+];
 
 const COLOR_HEX_MAP: Record<string, string> = {
   Black: '#000000', White: '#E5E7EB', Grey: '#9CA3AF', Blue: '#3B82F6',
@@ -42,84 +75,240 @@ const COLOR_HEX_MAP: Record<string, string> = {
   Gold: '#D97706', Beige: '#D4B896', Multicolor: '#94A3B8',
 };
 
+// Union of all condition option values across categories (single source: config).
+const ALL_CONDITIONS: string[] = Array.from(
+  new Set(
+    CATEGORY_CONFIG.flatMap((c) =>
+      (c.attributes.find((a) => a.key === 'condition')?.options ?? []).map((o) => o.value),
+    ),
+  ),
+);
+
+function isRtlText(text: string): boolean {
+  return /[֐-׿؀-ۿ]/.test(text);
+}
+
+function activeIcon(icon: keyof typeof Ionicons.glyphMap): keyof typeof Ionicons.glyphMap {
+  return icon.replace('-outline', '') as keyof typeof Ionicons.glyphMap;
+}
+
+// ---------------------------------------------------------------------------
+
 export default function SearchScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [allListings, setAllListings] = useState<any[]>([]);
-  const [filteredListings, setFilteredListings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterSubCategory, setFilterSubCategory] = useState('');
-  const [filterBrand, setFilterBrand] = useState('');
-  const [filterCondition, setFilterCondition] = useState('');
-  const [filterColor, setFilterColor] = useState('');
-  const [filterMinPrice, setFilterMinPrice] = useState('');
-  const [filterMaxPrice, setFilterMaxPrice] = useState('');
+  const [queryInput, setQueryInput] = useState('');
+  const [sort, setSort] = useState<SortOption>('newest');
+  const [filters, setFilters] = useState<SearchFilters>(EMPTY_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
+  const [recents, setRecents] = useState<RecentSearch[]>([]);
 
-  const activeCategoryConfig = activeCategory !== 'All'
-    ? CATEGORY_CONFIG.find((c) => c.name === activeCategory) ?? null
-    : null;
-
-  const activeFilterCount = [filterSubCategory, filterBrand, filterCondition, filterColor, filterMinPrice, filterMaxPrice].filter(Boolean).length;
+  const { phase, results, hasMore, isRefreshing, loadMore, retry, refresh } = useSearch({
+    query: queryInput,
+    filters,
+    sort,
+  });
 
   useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const snap = await getDocs(query(collection(db, 'listings'), orderBy('created_at', 'desc')));
-        const uid = auth.currentUser?.uid;
-        const listings = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() } as any))
-          .filter((l: any) => l.seller_id !== uid);
-        setAllListings(listings);
-        setFilteredListings(listings);
-      } catch (e) {
-        console.error('Error fetching for search:', e);
-      } finally {
-        setLoading(false);
-      }
+    let mounted = true;
+    loadRecentSearches().then((r) => {
+      if (mounted) setRecents(r);
+    });
+    return () => {
+      mounted = false;
     };
-    fetchListings();
   }, []);
 
-  useEffect(() => {
-    setFilterSubCategory('');
-    setFilterBrand('');
-  }, [activeCategory]);
+  const activeFilterCount = countActiveFilters(filters);
+  const rtl = isRtlText(queryInput);
 
-  useEffect(() => {
-    let result = allListings;
-    if (activeCategory !== 'All') result = result.filter((i) => i.category === activeCategory);
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter((i) =>
-        (i.title && i.title.toLowerCase().includes(q)) ||
-        (i.description && i.description.toLowerCase().includes(q))
+  const selectedCategoryConfig: CategoryConfig | null = useMemo(
+    () => (filters.category ? CATEGORY_CONFIG.find((c) => c.name === filters.category) ?? null : null),
+    [filters.category],
+  );
+
+  const conditionOptions = useMemo(() => {
+    if (selectedCategoryConfig) {
+      return (selectedCategoryConfig.attributes.find((a) => a.key === 'condition')?.options ?? []).map(
+        (o) => o.value,
       );
     }
-    if (filterSubCategory) result = result.filter((i) => i.sub_category === filterSubCategory);
-    if (filterBrand) result = result.filter((i) => i.brand === filterBrand || i.attributes?.brand === filterBrand);
-    if (filterCondition) result = result.filter((i) => i.condition === filterCondition || i.attributes?.condition === filterCondition);
-    if (filterColor) result = result.filter((i) => i.color === filterColor || i.attributes?.color === filterColor);
-    if (filterMinPrice) result = result.filter((i) => Number(i.price) >= Number(filterMinPrice));
-    if (filterMaxPrice) result = result.filter((i) => Number(i.price) <= Number(filterMaxPrice));
-    setFilteredListings(result);
-  }, [searchQuery, activeCategory, allListings, filterSubCategory, filterBrand, filterCondition, filterColor, filterMinPrice, filterMaxPrice]);
+    return ALL_CONDITIONS;
+  }, [selectedCategoryConfig]);
 
-  const handleClearAllFilters = () => {
-    setFilterSubCategory('');
-    setFilterBrand('');
-    setFilterCondition('');
-    setFilterColor('');
-    setFilterMinPrice('');
-    setFilterMaxPrice('');
+  const patchFilters = useCallback((patch: Partial<SearchFilters>) => {
+    setFilters((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handleSelectCategory = useCallback(
+    (name: string) => {
+      // Selecting a category resets category-scoped facets.
+      patchFilters({ category: name === 'All' ? '' : name, subCategory: '', brand: '' });
+    },
+    [patchFilters],
+  );
+
+  const handleSubmitSearch = useCallback(async () => {
+    const term = queryInput.trim();
+    if (!term) return;
+    const next = await addRecentSearch(term);
+    setRecents(next);
+  }, [queryInput]);
+
+  const handleTapRecent = useCallback((term: string) => {
+    setQueryInput(term);
+    Keyboard.dismiss();
+  }, []);
+
+  const handleRemoveRecent = useCallback(async (term: string) => {
+    const next = await removeRecentSearch(term);
+    setRecents(next);
+  }, []);
+
+  const handleClearRecents = useCallback(async () => {
+    await clearRecentSearches();
+    setRecents([]);
+  }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    setFilters(EMPTY_FILTERS);
+  }, []);
+
+  const showRecents = queryInput.trim().length === 0 && recents.length > 0;
+
+  // ---- Active filter chips ----
+  const chips = useMemo(() => {
+    const out: { key: string; label: string; onRemove: () => void }[] = [];
+    if (filters.category)
+      out.push({ key: 'category', label: filters.category, onRemove: () => patchFilters({ category: '', subCategory: '', brand: '' }) });
+    if (filters.subCategory)
+      out.push({ key: 'sub', label: filters.subCategory, onRemove: () => patchFilters({ subCategory: '' }) });
+    if (filters.brand)
+      out.push({ key: 'brand', label: filters.brand, onRemove: () => patchFilters({ brand: '' }) });
+    if (filters.condition)
+      out.push({ key: 'condition', label: filters.condition, onRemove: () => patchFilters({ condition: '' }) });
+    if (filters.color)
+      out.push({ key: 'color', label: filters.color, onRemove: () => patchFilters({ color: '' }) });
+    if (filters.location)
+      out.push({ key: 'location', label: filters.location, onRemove: () => patchFilters({ location: '' }) });
+    if (filters.minPrice || filters.maxPrice) {
+      const label = `₪${filters.minPrice || '0'} – ${filters.maxPrice || '∞'}`;
+      out.push({ key: 'price', label, onRemove: () => patchFilters({ minPrice: '', maxPrice: '' }) });
+    }
+    if (filters.status !== 'available')
+      out.push({ key: 'status', label: filters.status === 'sold' ? 'Sold' : 'All items', onRemove: () => patchFilters({ status: 'available' }) });
+    if (filters.date) {
+      const label = DATE_OPTIONS.find((d) => d.value === filters.date)?.label ?? '';
+      out.push({ key: 'date', label, onRemove: () => patchFilters({ date: '' }) });
+    }
+    return out;
+  }, [filters, patchFilters]);
+
+  // ---- Render helpers ----
+  const renderHeader = () => (
+    <View>
+      {/* Sort + count row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10 }}>
+        <Text style={{ fontSize: 13, color: MUTED, fontWeight: '600' }}>
+          {phase === 'loading' ? 'Searching…' : `${results.length}${hasMore ? '+' : ''} result${results.length !== 1 ? 's' : ''}`}
+        </Text>
+        <TouchableOpacity
+          onPress={() => setShowSort(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Sort by ${SORT_LABELS[sort]}`}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8 }}
+        >
+          <Ionicons name="swap-vertical-outline" size={16} color={TEAL} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: TEAL }}>{SORT_LABELS[sort]}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderContent = () => {
+    if (showRecents) return renderRecents();
+    if (phase === 'loading' || phase === 'idle') return <SkeletonGrid />;
+    if (phase === 'offline') return <StateView icon="cloud-offline-outline" title="You're offline" subtitle="Check your connection and try again." actionLabel="Retry" onAction={retry} />;
+    if (phase === 'error') return <StateView icon="warning-outline" title="Something went wrong" subtitle="We couldn't load results. Please try again." actionLabel="Retry" onAction={retry} />;
+
+    return (
+      <FlatList
+        data={results}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        onScrollBeginDrag={Keyboard.dismiss}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
+        columnWrapperStyle={{ gap: 4 }}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={renderHeader}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={refresh} tintColor={TEAL} colors={[TEAL]} />}
+        renderItem={({ item }) => (
+          <View style={{ flex: 1, paddingHorizontal: 4 }}>
+            <ListingCard item={item} />
+          </View>
+        )}
+        ListEmptyComponent={
+          phase === 'empty' ? (
+            <StateView
+              icon="search-outline"
+              title="No results found"
+              subtitle="Try different keywords, or clear some filters."
+              actionLabel={activeFilterCount > 0 ? 'Clear filters' : undefined}
+              onAction={activeFilterCount > 0 ? handleClearAllFilters : undefined}
+            />
+          ) : null
+        }
+        ListFooterComponent={
+          phase === 'loadingMore' ? (
+            <View style={{ paddingVertical: 24 }}>
+              <ActivityIndicator color={TEAL} />
+            </View>
+          ) : null
+        }
+      />
+    );
   };
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
+  const renderRecents = () => (
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: MUTED, letterSpacing: 1, textTransform: 'uppercase' }}>
+          Recent Searches
+        </Text>
+        <TouchableOpacity onPress={handleClearRecents} accessibilityRole="button" accessibilityLabel="Clear all recent searches">
+          <Text style={{ color: TEAL, fontWeight: '700', fontSize: 13 }}>Clear all</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {recents.map((r) => (
+          <View
+            key={r.term}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 6,
+              backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: BORDER,
+              borderRadius: 50, paddingLeft: 12, paddingRight: 8, paddingVertical: 8,
+            }}
+          >
+            <TouchableOpacity onPress={() => handleTapRecent(r.term)} accessibilityRole="button" accessibilityLabel={`Search ${r.term}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="time-outline" size={15} color={MUTED} />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: INK }}>{r.term}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleRemoveRecent(r.term)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Remove ${r.term}`}>
+              <Ionicons name="close" size={15} color={MUTED} />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
 
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: BG }} edges={['top']}>
       {/* Header */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14, backgroundColor: '#F8FAFC' }}>
-        <Text style={{ fontSize: 30, fontWeight: '800', color: '#0F766E', letterSpacing: -0.5, marginBottom: 14 }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14, backgroundColor: BG }}>
+        <Text style={{ fontSize: 30, fontWeight: '800', color: TEAL, letterSpacing: -0.5, marginBottom: 14 }}>
           Discover
         </Text>
 
@@ -127,23 +316,29 @@ export default function SearchScreen() {
           {/* Search input */}
           <View style={{
             flex: 1, flexDirection: 'row', alignItems: 'center',
-            backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
+            backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: BORDER,
             borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13,
             shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
           }}>
-            <Ionicons name="search-outline" size={20} color="#94A3B8" />
+            <Ionicons name="search-outline" size={20} color={MUTED} />
             <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search for anything..."
-              placeholderTextColor="#94A3B8"
+              value={queryInput}
+              onChangeText={setQueryInput}
+              onSubmitEditing={handleSubmitSearch}
+              placeholder="Search title, brand, category…"
+              placeholderTextColor={MUTED}
               returnKeyType="search"
-              style={{ flex: 1, marginLeft: 10, fontSize: 15, color: '#0F172A' }}
+              accessibilityLabel="Search listings"
+              style={{
+                flex: 1, marginLeft: 10, fontSize: 15, color: INK,
+                textAlign: rtl ? 'right' : 'left',
+                writingDirection: rtl ? 'rtl' : 'ltr',
+              }}
             />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color="#94A3B8" />
+            {queryInput.length > 0 && (
+              <TouchableOpacity onPress={() => setQueryInput('')} accessibilityRole="button" accessibilityLabel="Clear search">
+                <Ionicons name="close-circle" size={20} color={MUTED} />
               </TouchableOpacity>
             )}
           </View>
@@ -151,15 +346,17 @@ export default function SearchScreen() {
           {/* Filter button */}
           <TouchableOpacity
             onPress={() => setShowFilters(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}
             style={{
               position: 'relative', width: 48, height: 48,
-              backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
+              backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: BORDER,
               borderRadius: 14, alignItems: 'center', justifyContent: 'center',
               shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
             }}
           >
-            <Ionicons name="options-outline" size={22} color={activeFilterCount > 0 ? '#0F766E' : '#94A3B8'} />
+            <Ionicons name="options-outline" size={22} color={activeFilterCount > 0 ? TEAL : MUTED} />
             {activeFilterCount > 0 && (
               <View style={{
                 position: 'absolute', top: -5, right: -5,
@@ -177,226 +374,222 @@ export default function SearchScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12 }}
       >
-        {CATEGORIES.map((cat) => {
-          const isActive = activeCategory === cat;
-          const icons = CATEGORY_ICONS[cat];
+        {CATEGORY_PILLS.map((cat) => {
+          const isActive = (cat.name === 'All' && !filters.category) || filters.category === cat.name;
           return (
             <TouchableOpacity
-              key={cat}
-              onPress={() => setActiveCategory(cat)}
+              key={cat.name}
+              onPress={() => handleSelectCategory(cat.name)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
               style={{
                 flexDirection: 'row', alignItems: 'center',
                 paddingHorizontal: 14, paddingVertical: 9,
                 borderRadius: 50, marginRight: 10,
-                backgroundColor: isActive ? '#0F766E' : '#FFFFFF',
-                borderWidth: 1.5, borderColor: isActive ? '#0F766E' : '#E2E8F0',
+                backgroundColor: isActive ? TEAL : '#FFFFFF',
+                borderWidth: 1.5, borderColor: isActive ? TEAL : BORDER,
               }}
             >
-              {icons && (
-                <Ionicons
-                  name={isActive ? icons.activeIcon : icons.icon}
-                  size={14}
-                  color={isActive ? '#FFFFFF' : '#64748B'}
-                />
-              )}
-              <Text style={{
-                marginLeft: icons ? 6 : 0, fontWeight: '600', fontSize: 13,
-                color: isActive ? '#FFFFFF' : '#475569',
-              }}>
-                {cat}
+              <Ionicons
+                name={isActive ? activeIcon(cat.icon) : cat.icon}
+                size={14}
+                color={isActive ? '#FFFFFF' : '#64748B'}
+              />
+              <Text style={{ marginLeft: 6, fontWeight: '600', fontSize: 13, color: isActive ? '#FFFFFF' : '#475569' }}>
+                {cat.name}
               </Text>
             </TouchableOpacity>
           );
         })}
       </ScrollView>
 
-      {/* Results Grid */}
-      {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#0F766E" />
-        </View>
-      ) : (
-        <FlatList
-          data={filteredListings}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          onScrollBeginDrag={Keyboard.dismiss}
-          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
-          columnWrapperStyle={{ gap: 4 }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={{ flex: 1, paddingHorizontal: 4 }}>
-              <ListingCard item={item} />
-            </View>
-          )}
-          ListEmptyComponent={
-            <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 }}>
-              <Ionicons name="search-outline" size={56} color="#E2E8F0" />
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A', marginTop: 16, textAlign: 'center' }}>
-                No results found
-              </Text>
-              <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 6, lineHeight: 20 }}>
-                Try adjusting your search or selecting a different category.
-              </Text>
-            </View>
-          }
-        />
+      {/* Active filter chips */}
+      {chips.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, alignItems: 'center', gap: 8 }}
+        >
+          {chips.map((chip) => (
+            <TouchableOpacity
+              key={chip.key}
+              onPress={chip.onRemove}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove filter ${chip.label}`}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 5,
+                backgroundColor: '#CCFBF1', borderRadius: 50,
+                paddingLeft: 12, paddingRight: 9, paddingVertical: 7,
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: TEAL }}>{chip.label}</Text>
+              <Ionicons name="close" size={13} color={TEAL} />
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity onPress={handleClearAllFilters} accessibilityRole="button" accessibilityLabel="Clear all filters" style={{ paddingHorizontal: 6, paddingVertical: 7 }}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#EF4444' }}>Clear all</Text>
+          </TouchableOpacity>
+        </ScrollView>
       )}
+
+      {/* Content */}
+      <View style={{ flex: 1 }}>{renderContent()}</View>
+
+      {/* Sort Modal */}
+      <Modal visible={showSort} transparent animationType="fade" onRequestClose={() => setShowSort(false)}>
+        <TouchableOpacity activeOpacity={1} onPress={() => setShowSort(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 34, paddingTop: 8 }}>
+            <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#E2E8F0' }} />
+            </View>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: INK, paddingHorizontal: 20, paddingVertical: 12 }}>Sort by</Text>
+            {SORT_OPTIONS.map((opt) => {
+              const sel = sort === opt;
+              return (
+                <TouchableOpacity
+                  key={opt}
+                  onPress={() => { setSort(opt); setShowSort(false); }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: sel }}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15 }}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: sel ? '700' : '500', color: sel ? TEAL : INK }}>{SORT_LABELS[opt]}</Text>
+                  {sel && <Ionicons name="checkmark" size={20} color={TEAL} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Filter Modal */}
       <Modal visible={showFilters} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowFilters(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top', 'bottom']}>
-
-          {/* Modal Header */}
-          <View style={{
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-            paddingHorizontal: 20, paddingVertical: 16,
-            borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
-          }}>
-            <TouchableOpacity onPress={handleClearAllFilters}>
-              <Text style={{ color: '#0F766E', fontWeight: '600', fontSize: 15 }}>Clear All</Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: BG }} edges={['top', 'bottom']}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+            <TouchableOpacity onPress={handleClearAllFilters} accessibilityRole="button" accessibilityLabel="Clear all filters">
+              <Text style={{ color: TEAL, fontWeight: '600', fontSize: 15 }}>Clear All</Text>
             </TouchableOpacity>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#0F172A' }}>Filters</Text>
-            <TouchableOpacity onPress={() => setShowFilters(false)}>
-              <Ionicons name="close" size={24} color="#94A3B8" />
+            <Text style={{ fontSize: 18, fontWeight: '800', color: INK }}>Filters</Text>
+            <TouchableOpacity onPress={() => setShowFilters(false)} accessibilityRole="button" accessibilityLabel="Close filters">
+              <Ionicons name="close" size={24} color={MUTED} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Category */}
+            <FilterSection label="Category">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {CATEGORY_CONFIG.map((c) => (
+                  <SelectPill key={c.id} label={c.name} selected={filters.category === c.name} onPress={() => handleSelectCategory(filters.category === c.name ? 'All' : c.name)} />
+                ))}
+              </View>
+            </FilterSection>
 
             {/* Sub-category */}
-            {activeCategoryConfig && activeCategoryConfig.subCategories.length > 0 && (
-              <View style={{ marginTop: 24, marginBottom: 4 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
-                  Sub-category
-                </Text>
+            {selectedCategoryConfig && selectedCategoryConfig.subCategories.length > 0 && (
+              <FilterSection label="Sub-category">
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {activeCategoryConfig.subCategories.map((sub) => {
-                    const sel = filterSubCategory === sub.name;
-                    return (
-                      <TouchableOpacity
-                        key={sub.id}
-                        onPress={() => setFilterSubCategory((p) => p === sub.name ? '' : sub.name)}
-                        style={{
-                          paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
-                          backgroundColor: sel ? '#0F766E' : '#FFFFFF',
-                          borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
-                        }}
-                      >
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#FFFFFF' : '#475569' }}>{sub.name}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {selectedCategoryConfig.subCategories.map((sub) => (
+                    <SelectPill key={sub.id} label={sub.name} selected={filters.subCategory === sub.name} onPress={() => patchFilters({ subCategory: filters.subCategory === sub.name ? '' : sub.name })} />
+                  ))}
                 </View>
-              </View>
+              </FilterSection>
             )}
 
             {/* Brand */}
-            {activeCategoryConfig && activeCategoryConfig.brands.length > 0 && (
-              <View style={{ marginTop: 24, marginBottom: 4 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
-                  Brand
-                </Text>
+            {selectedCategoryConfig && selectedCategoryConfig.brands.length > 0 && (
+              <FilterSection label="Brand">
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {activeCategoryConfig.brands.map((brand) => {
-                    const sel = filterBrand === brand;
-                    return (
-                      <TouchableOpacity
-                        key={brand}
-                        onPress={() => setFilterBrand((p) => p === brand ? '' : brand)}
-                        style={{
-                          marginRight: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
-                          backgroundColor: sel ? '#0F766E' : '#FFFFFF',
-                          borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
-                        }}
-                      >
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#FFFFFF' : '#475569' }}>{brand}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {selectedCategoryConfig.brands.map((brand) => (
+                    <View key={brand} style={{ marginRight: 8 }}>
+                      <SelectPill label={brand} selected={filters.brand === brand} onPress={() => patchFilters({ brand: filters.brand === brand ? '' : brand })} />
+                    </View>
+                  ))}
                 </ScrollView>
-              </View>
+              </FilterSection>
             )}
 
             {/* Condition */}
-            <View style={{ marginTop: 24, marginBottom: 4 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
-                Condition
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {CONDITION_OPTIONS.map((cond) => {
-                  const sel = filterCondition === cond;
-                  return (
-                    <TouchableOpacity
-                      key={cond}
-                      onPress={() => setFilterCondition((p) => p === cond ? '' : cond)}
-                      style={{
-                        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
-                        backgroundColor: sel ? '#0F766E' : '#FFFFFF',
-                        borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
-                      }}
-                    >
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: sel ? '#FFFFFF' : '#475569' }}>{cond}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+            {conditionOptions.length > 0 && (
+              <FilterSection label="Condition">
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {conditionOptions.map((cond) => (
+                    <SelectPill key={cond} label={cond} selected={filters.condition === cond} onPress={() => patchFilters({ condition: filters.condition === cond ? '' : cond })} />
+                  ))}
+                </View>
+              </FilterSection>
+            )}
+
+            {/* Status */}
+            <FilterSection label="Availability">
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectPill key={s.value} label={s.label} selected={filters.status === s.value} onPress={() => patchFilters({ status: s.value })} />
+                ))}
               </View>
-            </View>
+            </FilterSection>
+
+            {/* Date */}
+            <FilterSection label="Date Posted">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {DATE_OPTIONS.map((d) => (
+                  <SelectPill key={d.value || 'any'} label={d.label} selected={filters.date === d.value} onPress={() => patchFilters({ date: d.value })} />
+                ))}
+              </View>
+            </FilterSection>
+
+            {/* Location */}
+            <FilterSection label="Location">
+              <CityPicker value={filters.location} onChange={(city) => patchFilters({ location: city })} placeholder="Any location" />
+              {filters.location.length > 0 && (
+                <TouchableOpacity onPress={() => patchFilters({ location: '' })} style={{ marginTop: 8 }} accessibilityRole="button" accessibilityLabel="Clear location">
+                  <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>Clear location</Text>
+                </TouchableOpacity>
+              )}
+            </FilterSection>
 
             {/* Price Range */}
-            <View style={{ marginTop: 24, marginBottom: 4 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
-                Price Range
-              </Text>
+            <FilterSection label="Price Range (₪)">
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 {[
-                  { label: 'Min $', value: filterMinPrice, onChange: setFilterMinPrice, placeholder: '0' },
-                  { label: 'Max $', value: filterMaxPrice, onChange: setFilterMaxPrice, placeholder: 'Any' },
+                  { label: 'Min', value: filters.minPrice, key: 'minPrice' as const, placeholder: '0' },
+                  { label: 'Max', value: filters.maxPrice, key: 'maxPrice' as const, placeholder: 'Any' },
                 ].map((field) => (
-                  <View key={field.label} style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6, fontWeight: '500' }}>{field.label}</Text>
+                  <View key={field.key} style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 12, color: MUTED, marginBottom: 6, fontWeight: '500' }}>{field.label}</Text>
                     <TextInput
                       value={field.value}
-                      onChangeText={field.onChange}
+                      onChangeText={(t) => patchFilters({ [field.key]: t.replace(/[^0-9.]/g, '') })}
                       placeholder={field.placeholder}
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor={MUTED}
                       keyboardType="numeric"
-                      style={{
-                        backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#E2E8F0',
-                        borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
-                        fontSize: 15, color: '#0F172A',
-                      }}
+                      accessibilityLabel={`${field.label} price`}
+                      style={{ backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: INK }}
                     />
                   </View>
                 ))}
               </View>
-            </View>
+            </FilterSection>
 
             {/* Color */}
             <View style={{ marginTop: 24, marginBottom: 32 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
-                Color
-              </Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: MUTED, marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>Color</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {COLORS.map((colorOpt) => {
-                  const sel = filterColor === colorOpt.value;
+                  const sel = filters.color === colorOpt.value;
                   const hex = COLOR_HEX_MAP[colorOpt.value];
                   return (
                     <TouchableOpacity
                       key={colorOpt.value}
-                      onPress={() => setFilterColor((p) => p === colorOpt.value ? '' : colorOpt.value)}
-                      style={{
-                        flexDirection: 'row', alignItems: 'center',
-                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 50,
-                        backgroundColor: sel ? '#0F766E' : '#FFFFFF',
-                        borderWidth: 1.5, borderColor: sel ? '#0F766E' : '#E2E8F0',
-                        gap: 6,
-                      }}
+                      onPress={() => patchFilters({ color: sel ? '' : colorOpt.value })}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: sel }}
+                      style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 50, backgroundColor: sel ? TEAL : '#FFFFFF', borderWidth: 1.5, borderColor: sel ? TEAL : BORDER, gap: 6 }}
                     >
                       {colorOpt.value !== 'Multicolor' ? (
-                        <View style={{ width: 13, height: 13, borderRadius: 7, backgroundColor: hex, borderWidth: 1, borderColor: '#E2E8F0' }} />
+                        <View style={{ width: 13, height: 13, borderRadius: 7, backgroundColor: hex, borderWidth: 1, borderColor: BORDER }} />
                       ) : (
                         <View style={{ width: 13, height: 13, borderRadius: 7, overflow: 'hidden', flexDirection: 'row' }}>
                           <View style={{ flex: 1, backgroundColor: '#F87171' }} />
@@ -413,18 +606,96 @@ export default function SearchScreen() {
           </ScrollView>
 
           {/* Show Results */}
-          <View style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: '#F8FAFC' }}>
-            <TouchableOpacity
-              onPress={() => setShowFilters(false)}
-              style={{ backgroundColor: '#0F766E', paddingVertical: 16, borderRadius: 14, alignItems: 'center' }}
-            >
+          <View style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: BG }}>
+            <TouchableOpacity onPress={() => setShowFilters(false)} accessibilityRole="button" style={{ backgroundColor: TEAL, paddingVertical: 16, borderRadius: 14, alignItems: 'center' }}>
               <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>
-                Show {filteredListings.length} Result{filteredListings.length !== 1 ? 's' : ''}
+                Show {results.length}{hasMore ? '+' : ''} Result{results.length !== 1 ? 's' : ''}
               </Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Presentational sub-components (UI only — all search logic lives in the hook)
+// ---------------------------------------------------------------------------
+
+function FilterSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <View style={{ marginTop: 24, marginBottom: 4 }}>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: MUTED, marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
+        {label}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+function SelectPill({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={{
+        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
+        backgroundColor: selected ? TEAL : '#FFFFFF',
+        borderWidth: 1.5, borderColor: selected ? TEAL : BORDER,
+      }}
+    >
+      <Text style={{ fontSize: 13, fontWeight: '600', color: selected ? '#FFFFFF' : '#475569' }}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function SkeletonGrid() {
+  const placeholders = Array.from({ length: 6 }, (_, i) => i);
+  return (
+    <ScrollView contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 8 }} scrollEnabled={false}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {placeholders.map((i) => (
+          <View key={i} style={{ width: '50%', paddingHorizontal: 4, marginBottom: 12 }}>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#F1F5F9' }}>
+              <View style={{ aspectRatio: 1, width: '100%', backgroundColor: '#EEF2F6' }} />
+              <View style={{ padding: 11, gap: 8 }}>
+                <View style={{ height: 12, borderRadius: 6, backgroundColor: '#EEF2F6', width: '80%' }} />
+                <View style={{ height: 14, borderRadius: 6, backgroundColor: '#EEF2F6', width: '40%' }} />
+                <View style={{ height: 10, borderRadius: 5, backgroundColor: '#EEF2F6', width: '55%' }} />
+              </View>
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+function StateView({
+  icon,
+  title,
+  subtitle,
+  actionLabel,
+  onAction,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  subtitle: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 }}>
+      <Ionicons name={icon} size={56} color="#E2E8F0" />
+      <Text style={{ fontSize: 18, fontWeight: '700', color: INK, marginTop: 16, textAlign: 'center' }}>{title}</Text>
+      <Text style={{ color: MUTED, textAlign: 'center', marginTop: 6, lineHeight: 20 }}>{subtitle}</Text>
+      {actionLabel && onAction && (
+        <TouchableOpacity onPress={onAction} accessibilityRole="button" style={{ marginTop: 18, backgroundColor: TEAL, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 50 }}>
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>{actionLabel}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }

@@ -93,9 +93,11 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
   }
 
   // 9. The model itself asked for approval or flagged something.
-  // Exception: when AI negotiation is enabled and the intent is price_negotiation,
+  // Exception (a): when AI negotiation is enabled and the intent is price_negotiation,
   // the model is instructed to set needsSellerApproval=false for counter-offers —
   // but if it still sets it true out of caution, we override it here so auto-send works.
+  // Exception (b): when AI deal finalization is enabled and the reply clearly confirms a
+  // deal, we similarly override the model's caution — the seller explicitly opted in.
   const modelRequestedApproval =
     result.needsSellerApproval || result.action === 'ask_seller' || result.action === 'flag_risk';
   const negotiationOverride =
@@ -104,7 +106,12 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
     result.intent === 'price_negotiation' &&
     result.action !== 'flag_risk' &&
     result.action !== 'ask_seller';
-  if (modelRequestedApproval && !negotiationOverride) {
+  const dealOverride =
+    settings.allowAiDealFinalization &&
+    DEAL_CONFIRMATION_REGEX.test(reply) &&
+    result.action !== 'flag_risk' &&
+    result.action !== 'ask_seller';
+  if (modelRequestedApproval && !negotiationOverride && !dealOverride) {
     if (result.action === 'flag_risk') flagRisk = true;
     if (reasons.length === 0) reasons.push(result.reason || 'Model requested seller review');
   }
@@ -112,6 +119,9 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
   // 10. Intents that must never auto-send regardless of model output.
   // price_negotiation is allowed through when the seller has enabled AI negotiation
   // AND the listing has a minimum price set (the price floor check above enforces the range).
+  // It is also allowed through when dealOverride is active — a buyer agreeing to the
+  // listed price ("ok deal") is classified as price_negotiation but is a finalization, not
+  // a counter-offer, so blocking the intent would prevent deal confirmations.
   // meetup_question is intentionally NOT in this set — the MEETUP_CONFIRMATION_REGEX
   // check above already blocks replies that confirm a specific time/place. Blocking
   // the entire intent would prevent informational replies like "yes I can meet in X area".
@@ -120,7 +130,7 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
     'payment_question',
     'suspicious_message',
   ]);
-  if (!settings.allowAiNegotiation || aiInfo.minimumPrice == null) {
+  if ((!settings.allowAiNegotiation || aiInfo.minimumPrice == null) && !dealOverride) {
     NEVER_AUTO_INTENTS.add('price_negotiation');
   }
   if (NEVER_AUTO_INTENTS.has(result.intent)) {
@@ -129,8 +139,12 @@ export function validateAiReply({ result, buyerMessage, settings, aiInfo }: Vali
   }
 
   if (reasons.length === 0) {
-    // Safe — keep the model's action, allow auto-send eligibility
-    return { ...result, shouldAutoSend: result.action === 'auto_reply' };
+    // Safe — keep the model's action, allow auto-send eligibility.
+    // If dealOverride is active and the model returned draft_reply out of caution,
+    // upgrade to auto_reply so the confirmation sends immediately.
+    const finalAction =
+      dealOverride && result.action === 'draft_reply' ? 'auto_reply' : result.action;
+    return { ...result, action: finalAction, shouldAutoSend: finalAction === 'auto_reply' };
   }
 
   return {

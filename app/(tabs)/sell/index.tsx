@@ -8,10 +8,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SellIndexScreen() {
   const router = useRouter();
 
+  const MAX_IMAGES = 6;
+
   const handlePickImage = async (useCamera: boolean) => {
     try {
       let result;
-      
+
       if (useCamera) {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
@@ -21,25 +23,25 @@ export default function SellIndexScreen() {
         result = await ImagePicker.launchCameraAsync({
           mediaTypes: ['images'], // Fixed the deprecation warning!
           allowsEditing: true,
-          aspect: [4, 3],
+          aspect: [1, 1], // square crop — matches how listings are displayed in the grid
           quality: 0.8,
         });
       } else {
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'], // Fixed the deprecation warning!
-          allowsEditing: true,
-          aspect: [4, 3],
+          allowsMultipleSelection: true,
+          selectionLimit: MAX_IMAGES,
           quality: 0.8,
         });
       }
 
-      if (!result.canceled && result.assets[0]) {
-        // ENCODE the URL so Expo Router doesn't break the string
-        const safeUri = encodeURIComponent(result.assets[0].uri);
-        
+      if (!result.canceled && result.assets.length > 0) {
+        // ENCODE each URI so Expo Router doesn't break the string, join into one param
+        const safeUris = result.assets.map((asset) => encodeURIComponent(asset.uri)).join(',');
+
         router.push({
           pathname: '/(tabs)/sell/category',
-          params: { imageUri: safeUri }
+          params: { imageUri: safeUris }
         });
       }
     } catch (error) {

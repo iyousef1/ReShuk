@@ -44,13 +44,6 @@ const MENU_ITEMS = [
     iconBg: '#CCFBF1',
     route: '/(tabs)/profile/saved-answers' as const,
   },
-  {
-    label: 'Settings',
-    icon: 'settings-outline' as const,
-    iconColor: '#3B82F6',
-    iconBg: '#EFF6FF',
-    route: null,
-  },
 ];
 
 export default function ProfileScreen() {

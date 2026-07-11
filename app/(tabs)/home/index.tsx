@@ -27,44 +27,6 @@ const CATEGORIES = [
   { label: 'Books', icon: 'book-outline' as const, activeIcon: 'book' as const },
 ];
 
-const FEATURED_LISTINGS = [
-  {
-    id: '1',
-    title: 'iPhone 12 Pro',
-    price: '$450',
-    image: 'https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=500&q=80',
-    condition: 'Like New',
-    rating: 4.8,
-  },
-  {
-    id: '2',
-    title: 'Vintage Record Player',
-    price: '$120',
-    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5e?w=500&q=80',
-    condition: 'Good',
-    rating: 4.5,
-  },
-  {
-    id: '3',
-    title: 'Nike Air Max Sneakers',
-    price: '$60',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80',
-    condition: 'Fair',
-    rating: 4.2,
-  },
-];
-
-const CONDITION_COLORS: Record<string, string> = {
-  likenew: '#22C55E',
-  good: '#3B82F6',
-  fair: '#F97316',
-  poor: '#EF4444',
-};
-
-function getConditionColor(condition: string) {
-  return CONDITION_COLORS[condition.toLowerCase().replace(/\s+/g, '')] ?? '#94A3B8';
-}
-
 export default function HomeScreen() {
   const router = useRouter();
 
@@ -370,68 +332,6 @@ export default function HomeScreen() {
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
         </View>
       </TouchableOpacity>
-
-      {/* Featured Listings */}
-      <View style={{ paddingHorizontal: 20, marginBottom: 14 }}>
-        <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', letterSpacing: -0.3 }}>
-          Featured Listings
-        </Text>
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20 }}
-        style={{ marginBottom: 28 }}
-      >
-        {FEATURED_LISTINGS.map((item) => {
-          const conditionColor = getConditionColor(item.condition);
-          return (
-            <TouchableOpacity
-              key={item.id}
-              onPress={() => console.log('Mock item tapped')}
-              activeOpacity={0.85}
-              style={{
-                width: 172, backgroundColor: '#FFFFFF', borderRadius: 16,
-                overflow: 'hidden', marginRight: 14,
-                shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
-                borderWidth: 1, borderColor: '#F1F5F9',
-              }}
-            >
-              <View style={{ height: 186, position: 'relative' }}>
-                <Image
-                  source={{ uri: item.image }}
-                  style={{ width: '100%', height: '100%' }}
-                  resizeMode="cover"
-                />
-                <View style={{
-                  position: 'absolute', top: 10, left: 10,
-                  backgroundColor: conditionColor, borderRadius: 20,
-                  paddingHorizontal: 9, paddingVertical: 3.5,
-                }}>
-                  <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>
-                    {item.condition}
-                  </Text>
-                </View>
-              </View>
-              <View style={{ padding: 12 }}>
-                <Text style={{ color: '#0F172A', fontWeight: '800', fontSize: 17, marginBottom: 2 }} numberOfLines={1}>
-                  {item.price}
-                </Text>
-                <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 9 }} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="star" size={12} color="#F59E0B" />
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#334155', marginLeft: 4 }}>
-                    {item.rating}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
 
       {/* For You Section */}
       {recommendedListings.length > 0 && (

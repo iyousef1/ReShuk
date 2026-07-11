@@ -3,16 +3,13 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 
+import type { ListingDocument } from '../../../types/listing';
+
 interface ListingCardProps {
-  item: {
-    id: string;
-    title: string;
-    price: number | string;
-    image_url: string | string[];
-    category: string;
-    condition?: string;
-    is_ai_priced?: boolean;
-  };
+  item: Pick<
+    ListingDocument,
+    'id' | 'title' | 'price' | 'image_url' | 'category' | 'condition' | 'is_ai_priced'
+  >;
 }
 
 const CONDITION_COLORS: Record<string, string> = {

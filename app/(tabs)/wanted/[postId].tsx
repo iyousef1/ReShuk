@@ -154,10 +154,10 @@ export default function WantedDetailScreen() {
         );
         snap.docs.forEach((d) => {
           if (seen.has(d.id)) return;
-          const listing = { id: d.id, ...d.data() };
+          const listing = { id: d.id, ...d.data() } as { id: string; seller_id?: string; price?: number; [k: string]: any };
           // Filter out own listings and respect budget
           if (listing.seller_id === currentUid) return;
-          if (p.max_budget != null && listing.price > p.max_budget) return;
+          if (p.max_budget != null && listing.price != null && listing.price > p.max_budget) return;
           seen.add(d.id);
           results.push(listing);
         });
@@ -174,9 +174,9 @@ export default function WantedDetailScreen() {
         );
         snap.docs.forEach((d) => {
           if (seen.has(d.id)) return;
-          const listing = { id: d.id, ...d.data() };
+          const listing = { id: d.id, ...d.data() } as { id: string; seller_id?: string; price?: number; [k: string]: any };
           if (listing.seller_id === currentUid) return;
-          if (p.max_budget != null && listing.price > p.max_budget) return;
+          if (p.max_budget != null && listing.price != null && listing.price > p.max_budget) return;
           seen.add(d.id);
           results.push(listing);
         });

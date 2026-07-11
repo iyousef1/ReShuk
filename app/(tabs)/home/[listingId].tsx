@@ -31,6 +31,7 @@ export default function ListingDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -159,9 +160,11 @@ export default function ListingDetailScreen() {
 
   if (!listing) return null;
 
-  const imageUrl = listing.image_url && listing.image_url.length > 0 
-    ? listing.image_url[0] 
-    : 'https://via.placeholder.com/400';
+  const images: string[] = Array.isArray(listing.image_url) && listing.image_url.length > 0
+    ? listing.image_url
+    : (typeof listing.image_url === 'string' && listing.image_url
+        ? [listing.image_url]
+        : ['https://via.placeholder.com/400']);
 
   return (
     <View className="flex-1 bg-surface-light dark:bg-surface-dark">
@@ -169,13 +172,37 @@ export default function ListingDetailScreen() {
         
         {/* HERO IMAGE SECTION */}
         <View className="relative w-full bg-slate-200 dark:bg-slate-800" style={{ height: width }}>
-          <Image 
-            source={{ uri: imageUrl }} 
-            className="w-full h-full"
-            resizeMode="cover"
-          />
-          
-          <TouchableOpacity 
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / width);
+              setActiveImageIndex(index);
+            }}
+          >
+            {images.map((uri, index) => (
+              <Image
+                key={`${uri}-${index}`}
+                source={{ uri }}
+                style={{ width, height: width }}
+                resizeMode="contain"
+              />
+            ))}
+          </ScrollView>
+
+          {images.length > 1 && (
+            <View className="absolute bottom-3 w-full flex-row justify-center" style={{ gap: 6 }}>
+              {images.map((_, index) => (
+                <View
+                  key={index}
+                  className={`h-1.5 rounded-full ${index === activeImageIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`}
+                />
+              ))}
+            </View>
+          )}
+
+          <TouchableOpacity
             onPress={() => router.back()}
             style={{ top: Math.max(insets.top, 20) }}
             className="absolute left-4 w-10 h-10 bg-black/40 rounded-full items-center justify-center backdrop-blur-md z-10"

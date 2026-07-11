@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-opus-4-7';
+const MODEL = 'claude-opus-4-8';
 const MAX_PHOTOS = 4;
 
 type Category = string;
