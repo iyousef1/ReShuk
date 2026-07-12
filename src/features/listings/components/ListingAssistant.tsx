@@ -206,6 +206,23 @@ function validateRevalueContext(text: string): string | null {
   return null;
 }
 
+function coerceNum(v: unknown): number | null {
+  const n = typeof v === 'string' ? parseFloat(v.replace(/[^0-9.]/g, '')) : v;
+  return typeof n === 'number' && isFinite(n) ? n : null;
+}
+
+// The model's tool output can be incomplete (e.g. truncated at max_tokens), which
+// would leave price_estimate fields undefined and crash the price UI. Guarantee three
+// finite, ordered numbers so low ≤ suggested ≤ high no matter what came back.
+function normalizePriceEstimate(pe: any): { low: number; suggested: number; high: number } {
+  const nums = [coerceNum(pe?.low), coerceNum(pe?.suggested), coerceNum(pe?.high)];
+  const present = nums.filter((n): n is number => n != null);
+  const fallback = present.length ? Math.round(present.reduce((a, b) => a + b, 0) / present.length) : 0;
+  const [low, suggested, high] = nums.map((n) => n ?? fallback);
+  const sorted = [low, suggested, high].sort((a, b) => a - b);
+  return { low: sorted[0], suggested: sorted[1], high: sorted[2] };
+}
+
 async function analyzeImages(
   images: PickedImage[],
   opts?: { additionalContext?: string; current?: ListingResult }
@@ -255,7 +272,7 @@ async function analyzeImages(
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: SYSTEM_PROMPT,
       tools: [LISTING_TOOL],
       tool_choice: { type: 'tool', name: 'create_listing' },
@@ -287,6 +304,8 @@ async function analyzeImages(
   const raw = toolUse.input as ListingResult;
   raw.condition = AI_CONDITION_MAP[raw.condition] ?? raw.condition;
   if (!raw.attributes) raw.attributes = {};
+  if (!Array.isArray(raw.key_specs)) raw.key_specs = [];
+  raw.price_estimate = normalizePriceEstimate(raw.price_estimate);
   return { result: raw, resizedUris: encoded.map((e) => e.uri) };
 }
 
