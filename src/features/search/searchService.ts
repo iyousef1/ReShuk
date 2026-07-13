@@ -177,6 +177,11 @@ export function passesFilters(
     if (color !== filters.color) return false;
   }
 
+  if (filters.size) {
+    const size = attributeValue(listing, 'size');
+    if (size !== filters.size) return false;
+  }
+
   if (filters.location) {
     const target = normalizeText(filters.location);
     const loc = normalizeText(listing.location);

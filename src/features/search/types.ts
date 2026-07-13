@@ -25,6 +25,8 @@ export interface SearchFilters {
   brand: string;
   condition: string;
   color: string;
+  /** Size / shoe size — matched against the listing's `size` attribute. */
+  size: string;
   location: string;
   minPrice: string;
   maxPrice: string;
@@ -38,6 +40,7 @@ export const EMPTY_FILTERS: SearchFilters = {
   brand: '',
   condition: '',
   color: '',
+  size: '',
   location: '',
   minPrice: '',
   maxPrice: '',
@@ -56,6 +59,7 @@ export function countActiveFilters(f: SearchFilters): number {
   if (f.brand) n++;
   if (f.condition) n++;
   if (f.color) n++;
+  if (f.size) n++;
   if (f.location) n++;
   if (f.minPrice) n++;
   if (f.maxPrice) n++;

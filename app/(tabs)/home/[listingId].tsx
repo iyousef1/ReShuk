@@ -252,19 +252,39 @@ export default function ListingDetailScreen() {
             {listing.description || 'No description provided by the seller.'}
           </Text>
 
-          {/* AI CONFIDENCE NOTE */}
-          {listing.is_ai_priced && listing.ai_confidence_reason && (
-            <View style={{
-              flexDirection: 'row', alignItems: 'flex-start',
-              backgroundColor: '#FEFCE8', borderWidth: 1, borderColor: '#FEF08A',
-              borderRadius: 14, padding: 14, marginBottom: 20,
-            }}>
-              <Ionicons name="information-circle-outline" size={18} color="#CA8A04" style={{ marginTop: 1 }} />
-              <Text style={{ flex: 1, marginLeft: 10, fontSize: 13, color: '#854D0E', lineHeight: 20 }}>
-                {listing.ai_confidence_reason}
-              </Text>
-            </View>
-          )}
+          {/* AI CONFIDENCE — shown to buyers */}
+          {listing.is_ai_priced && !!listing.ai_confidence && (() => {
+            const CONF: Record<string, { bg: string; border: string; text: string; icon: keyof typeof Ionicons.glyphMap; label: string }> = {
+              high:   { bg: '#DCFCE7', border: '#BBF7D0', text: '#15803D', icon: 'checkmark-circle', label: 'High' },
+              medium: { bg: '#FEF9C3', border: '#FEF08A', text: '#B45309', icon: 'alert-circle',     label: 'Medium' },
+              low:    { bg: '#FEE2E2', border: '#FECACA', text: '#DC2626', icon: 'help-circle',      label: 'Low' },
+            };
+            const c = CONF[String(listing.ai_confidence).toLowerCase()] ?? CONF.medium;
+            return (
+              <View
+                style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#F1F5F9', borderRadius: 14, padding: 14, marginBottom: 20 }}
+                className="dark:bg-surface-cardDark dark:border-slate-800"
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="sparkles" size={15} color="#0F766E" />
+                    <Text style={{ marginLeft: 8, fontSize: 13, fontWeight: '700', color: '#0F172A' }} className="dark:text-text-darkPrimary">
+                      AI price confidence
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c.bg, borderWidth: 1, borderColor: c.border, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
+                    <Ionicons name={c.icon} size={13} color={c.text} />
+                    <Text style={{ marginLeft: 5, fontSize: 12, fontWeight: '700', color: c.text }}>{c.label}</Text>
+                  </View>
+                </View>
+                {!!listing.ai_confidence_reason && (
+                  <Text style={{ marginTop: 10, fontSize: 13, color: '#64748B', lineHeight: 19 }} className="dark:text-text-darkMuted">
+                    {listing.ai_confidence_reason}
+                  </Text>
+                )}
+              </View>
+            );
+          })()}
 
           {/* AI ASSESSMENT SECTION */}
           {(() => {

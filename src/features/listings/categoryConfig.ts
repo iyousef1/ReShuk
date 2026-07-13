@@ -15,6 +15,12 @@ export type CategoryConfig = {
   subCategories: SubCategory[];
   brands: string[];
   attributes: Attribute[];
+  /**
+   * Per-sub-category attribute overrides. Keyed by sub-category name. An entry
+   * whose `key` matches a category attribute REPLACES it for that sub-category
+   * (e.g. footwear swaps clothing sizes for EU shoe sizes); a new key is added.
+   */
+  subCategoryAttributes?: Record<string, Attribute[]>;
 };
 
 const toOptions = (labels: string[]): AttributeOption[] =>
@@ -43,6 +49,13 @@ export const STANDARD_CONDITION: AttributeOption[] = toOptions([
   'Like New',
   'Good',
   'Fair',
+]);
+
+// EU shoe sizing (the standard used in Israel). Half sizes included for the
+// common range where they matter most.
+export const SHOE_SIZES: AttributeOption[] = toOptions([
+  'EU 35', 'EU 36', 'EU 37', 'EU 38', 'EU 39', 'EU 40', 'EU 41', 'EU 42',
+  'EU 43', 'EU 44', 'EU 45', 'EU 46', 'EU 47', 'EU 48',
 ]);
 
 export const CATEGORY_CONFIG: CategoryConfig[] = [
@@ -145,6 +158,12 @@ export const CATEGORY_CONFIG: CategoryConfig[] = [
         options: toOptions(['Men', 'Women', 'Unisex', 'Kids']),
       },
     ],
+    subCategoryAttributes: {
+      // Footwear uses EU shoe sizing instead of clothing sizes.
+      'Shoes & Footwear': [
+        { key: 'size', label: 'Shoe Size (EU)', type: 'pills', options: SHOE_SIZES },
+      ],
+    },
   },
   {
     id: 'Home',
@@ -387,3 +406,24 @@ export const CATEGORY_CONFIG: CategoryConfig[] = [
     ],
   },
 ];
+
+/**
+ * Effective attributes for a specific item, applying any sub-category overrides
+ * on top of the category defaults. An override with a matching `key` replaces the
+ * category attribute in place (preserving order); a new key is appended.
+ * Use this everywhere attributes are shown/queried so each product type gets the
+ * fields that fit it (e.g. footwear → EU shoe sizes).
+ */
+export function resolveAttributes(categoryName: string, subCategoryName?: string): Attribute[] {
+  const cat = CATEGORY_CONFIG.find((c) => c.name === categoryName);
+  if (!cat) return [];
+  const overrides = subCategoryName ? cat.subCategoryAttributes?.[subCategoryName] : undefined;
+  if (!overrides || overrides.length === 0) return cat.attributes;
+
+  const overrideByKey = new Map(overrides.map((a) => [a.key, a] as const));
+  const merged = cat.attributes.map((a) => overrideByKey.get(a.key) ?? a);
+  for (const o of overrides) {
+    if (!cat.attributes.some((a) => a.key === o.key)) merged.push(o);
+  }
+  return merged;
+}

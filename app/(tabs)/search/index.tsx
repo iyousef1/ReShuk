@@ -19,6 +19,7 @@ import CityPicker from '../../../src/components/ui/CityPicker';
 import {
   CATEGORY_CONFIG,
   COLORS,
+  resolveAttributes,
   type CategoryConfig,
 } from '../../../src/features/listings/categoryConfig';
 
@@ -135,14 +136,21 @@ export default function SearchScreen() {
     return ALL_CONDITIONS;
   }, [selectedCategoryConfig]);
 
+  // Size options depend on the selected category + sub-category (e.g. footwear
+  // shows EU shoe sizes). Only shown when the current selection has a size facet.
+  const sizeOptions = useMemo(() => {
+    if (!filters.category) return [];
+    return resolveAttributes(filters.category, filters.subCategory).find((a) => a.key === 'size')?.options ?? [];
+  }, [filters.category, filters.subCategory]);
+
   const patchFilters = useCallback((patch: Partial<SearchFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
   }, []);
 
   const handleSelectCategory = useCallback(
     (name: string) => {
-      // Selecting a category resets category-scoped facets.
-      patchFilters({ category: name === 'All' ? '' : name, subCategory: '', brand: '' });
+      // Selecting a category resets category-scoped facets (sizes differ per category).
+      patchFilters({ category: name === 'All' ? '' : name, subCategory: '', brand: '', size: '' });
     },
     [patchFilters],
   );
@@ -188,6 +196,8 @@ export default function SearchScreen() {
       out.push({ key: 'condition', label: filters.condition, onRemove: () => patchFilters({ condition: '' }) });
     if (filters.color)
       out.push({ key: 'color', label: filters.color, onRemove: () => patchFilters({ color: '' }) });
+    if (filters.size)
+      out.push({ key: 'size', label: filters.size, onRemove: () => patchFilters({ size: '' }) });
     if (filters.location)
       out.push({ key: 'location', label: filters.location, onRemove: () => patchFilters({ location: '' }) });
     if (filters.minPrice || filters.maxPrice) {
@@ -489,7 +499,7 @@ export default function SearchScreen() {
               <FilterSection label="Sub-category">
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {selectedCategoryConfig.subCategories.map((sub) => (
-                    <SelectPill key={sub.id} label={sub.name} selected={filters.subCategory === sub.name} onPress={() => patchFilters({ subCategory: filters.subCategory === sub.name ? '' : sub.name })} />
+                    <SelectPill key={sub.id} label={sub.name} selected={filters.subCategory === sub.name} onPress={() => patchFilters({ subCategory: filters.subCategory === sub.name ? '' : sub.name, size: '' })} />
                   ))}
                 </View>
               </FilterSection>
@@ -514,6 +524,22 @@ export default function SearchScreen() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {conditionOptions.map((cond) => (
                     <SelectPill key={cond} label={cond} selected={filters.condition === cond} onPress={() => patchFilters({ condition: filters.condition === cond ? '' : cond })} />
+                  ))}
+                </View>
+              </FilterSection>
+            )}
+
+            {/* Size (category/sub-category specific, e.g. EU shoe sizes for footwear) */}
+            {sizeOptions.length > 0 && (
+              <FilterSection label="Size">
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {sizeOptions.map((opt) => (
+                    <SelectPill
+                      key={opt.value}
+                      label={opt.label}
+                      selected={filters.size === opt.value}
+                      onPress={() => patchFilters({ size: filters.size === opt.value ? '' : opt.value })}
+                    />
                   ))}
                 </View>
               </FilterSection>

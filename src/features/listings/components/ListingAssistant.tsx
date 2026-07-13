@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { CATEGORY_CONFIG } from '../categoryConfig';
+import { CATEGORY_CONFIG, resolveAttributes } from '../categoryConfig';
 import CityPicker from '../../../components/ui/CityPicker';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -121,10 +121,12 @@ Guidelines:
   • low = quick-sale price to move it within a few days.
   • high = best case: a patient seller and an ideal buyer.
 - UNCERTAINTY BIAS: when you are unsure of the exact model, specs, or local market, price toward the LOWER half of your range. An overpriced listing simply won't sell and the seller can always raise it, so erring low costs less than erring high.
+- ALWAYS PRICE: The "never guess" rule applies to specs and attributes, NOT to price. You must ALWAYS return a best-effort price_estimate with positive low, suggested, and high values — never 0, blank, or omitted. If you cannot identify the item precisely, estimate a plausible range for what it visibly appears to be (its type, size, materials, apparent quality) and set confidence to "low". A rough estimate is required; refusing to price is not an option.
 - If the photos are blurry, partial, or the item is ambiguous, set confidence to "low" or "medium" and explain why in confidence_reason. Still provide your best guess.
 - key_specs: 2-5 short factual specs, built from the details you extracted (e.g. "256GB storage", "12GB RAM", "6.8-inch display", "Size L", "1.8L capacity"). Prefer specs you actually observed in the photos.
 - TITLE: concise, specific, and search-friendly — assembled from the accurate details you extracted, typically brand + model + the one spec buyers care most about (e.g. "Samsung Galaxy S22 Ultra 256GB", "Nike Air Max 90 — Size 42", "IKEA Malm Desk, White"). Include a distinguishing spec only when you are confident of it; otherwise keep it simpler. Do not pad with condition words unless notable.
-- DESCRIPTION: 2-3 honest, neutral sentences in English that naturally weave in the concrete extracted details (key specs, what's included, notable condition or defects). Factual and specific, never salesy or exaggerated. Only state details you actually determined.
+- DESCRIPTION: Describe ONLY what you can actually see or know for certain from the photos — observed specs, visible condition, and clearly identified details. Do NOT write anything you cannot verify: no assumptions about usage history, battery health, age, reason for selling, whether it works, or what's included unless it is visibly present. Do NOT pad with generic filler or sales language ("great deal", "perfect for...", "barely used"). If little is verifiable, keep the description short — one honest sentence is better than inventing detail. English only, factual and neutral.
+- RELEVANCE: Include only details that matter to a buyer's purchase decision — the lasting characteristics of the item (what it is, key specs, permanent condition and defects, what's included). EXCLUDE momentary or incidental state that a photo happened to capture but that says nothing about the item's lasting value or condition — e.g. the current battery charge level, the time/date on the screen, the weather widget, open apps, notifications, signal strength, the surface it's sitting on, or lighting. Distinguish permanent traits (which matter) from the current moment (which doesn't): a phone's storage capacity matters; how charged it happens to be right now does not.
 - For category, choose one of: Electronics, Fashion, Home, Sports, Toys, Vehicles, Books, Other.
 - For sub_category, pick the most specific one for the chosen category:
 ${CATEGORY_CONFIG.map((c) => `  ${c.name}: ${c.subCategories.map((s) => s.name).join(', ')}`).join('\n')}
@@ -132,22 +134,45 @@ ${CATEGORY_CONFIG.map((c) => `  ${c.name}: ${c.subCategories.map((s) => s.name).
 ATTRIBUTES — fill in as many as you can:
 Populate the "attributes" map with EVERY attribute below (for your chosen category) that you can confidently determine from the photos or from well-known specs of the identified model. The more you fill in, the better the listing. Use the EXACT key shown, and for fixed-option attributes use one of the EXACT allowed values (case-sensitive, English). Omit any attribute you cannot determine — never guess or invent a value. For a widely-known product you may infer standard specs (e.g. a specific phone model's default color options or a laptop's typical RAM) only when the photos clearly identify that exact model; otherwise leave it out.
 ${CATEGORY_CONFIG.map((c) => {
-  const attrs = c.attributes.filter((a) => a.key !== 'condition' && a.key !== 'model');
-  if (attrs.length === 0) return `  ${c.name}: (none)`;
-  const parts = attrs.map((a) =>
-    a.options
-      ? `${a.key} (one of: ${a.options.map((o) => o.value).join(', ')})`
-      : `${a.key} (free text${a.placeholder ? `, e.g. ${a.placeholder}` : ''})`,
-  );
-  return `  ${c.name}: ${parts.join('; ')}`;
-}).join('\n')}`;
+  const fmt = (attrs: typeof c.attributes) =>
+    attrs
+      .filter((a) => a.key !== 'condition' && a.key !== 'model')
+      .map((a) =>
+        a.options
+          ? `${a.key} (one of: ${a.options.map((o) => o.value).join(', ')})`
+          : `${a.key} (free text${a.placeholder ? `, e.g. ${a.placeholder}` : ''})`,
+      );
+  const base = fmt(c.attributes);
+  const lines = [base.length ? `  ${c.name}: ${base.join('; ')}` : `  ${c.name}: (none)`];
+  // Sub-category overrides (e.g. footwear uses EU shoe sizes, not clothing sizes).
+  for (const [sub, attrs] of Object.entries(c.subCategoryAttributes ?? {})) {
+    lines.push(`    ↳ ${c.name} → ${sub}: ${fmt(attrs).join('; ')}  (use these instead for this sub-category)`);
+  }
+  return lines.join('\n');
+}).join('\n')}
+When the chosen sub-category has an override listed above, use ITS attribute values for that sub-category — for example, for Fashion → Shoes & Footwear set "size" to an EU shoe size (e.g. "EU 42"), not a clothing size.`;
 
 const LISTING_TOOL = {
   name: 'create_listing',
   description: 'Create a structured marketplace listing from the analyzed item photos.',
   input_schema: {
     type: 'object',
+    // Property order matters: the model generates fields in this order, so the
+    // must-have compact fields (price, title, category, condition, confidence)
+    // come FIRST and the long free-text fields last. That way, if a response is
+    // ever truncated at max_tokens, only the trailing "nice to have" fields are
+    // lost — never the price estimate.
     properties: {
+      price_estimate: {
+        type: 'object',
+        description: 'Best-effort resale price range in ILS. Always present with positive numbers.',
+        properties: {
+          low: { type: 'number' },
+          suggested: { type: 'number' },
+          high: { type: 'number' },
+        },
+        required: ['low', 'suggested', 'high'],
+      },
       title: { type: 'string', description: 'Concise, search-friendly listing title.' },
       category: {
         type: 'string',
@@ -161,39 +186,30 @@ const LISTING_TOOL = {
       brand: { type: 'string' },
       model: { type: 'string' },
       condition: { type: 'string', enum: ['like_new', 'good', 'fair', 'poor'] },
-      condition_details: { type: 'string', description: 'One sentence about visible condition.' },
-      price_estimate: {
-        type: 'object',
-        properties: {
-          low: { type: 'number' },
-          suggested: { type: 'number' },
-          high: { type: 'number' },
-        },
-        required: ['low', 'suggested', 'high'],
-      },
-      description: { type: 'string', description: '2-3 sentence listing description, in English.' },
-      key_specs: { type: 'array', items: { type: 'string' } },
+      confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
       attributes: {
         type: 'object',
         description:
           'Category-specific attributes inferred from the photos (e.g. color, storage, ram, size, material, gender, year). Use the exact keys and allowed values from the ATTRIBUTES guide in the system prompt. Include every attribute you can confidently determine and omit the rest. All values in English.',
         additionalProperties: { type: 'string' },
       },
-      confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+      condition_details: { type: 'string', description: 'One sentence about visible condition.' },
+      description: { type: 'string', description: 'Listing description in English — only verifiable, observed facts. Keep it short if little is known; do not invent details.' },
+      key_specs: { type: 'array', items: { type: 'string' } },
       confidence_reason: { type: 'string' },
     },
     required: [
+      'price_estimate',
       'title',
       'category',
       'sub_category',
       'brand',
       'model',
       'condition',
+      'confidence',
       'condition_details',
-      'price_estimate',
       'description',
       'key_specs',
-      'confidence',
       'confidence_reason',
     ],
   },
@@ -272,7 +288,7 @@ async function analyzeImages(
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
       tools: [LISTING_TOOL],
       tool_choice: { type: 'tool', name: 'create_listing' },
@@ -305,7 +321,23 @@ async function analyzeImages(
   raw.condition = AI_CONDITION_MAP[raw.condition] ?? raw.condition;
   if (!raw.attributes) raw.attributes = {};
   if (!Array.isArray(raw.key_specs)) raw.key_specs = [];
-  raw.price_estimate = normalizePriceEstimate(raw.price_estimate);
+  if (!['high', 'medium', 'low'].includes(raw.confidence)) raw.confidence = 'low';
+
+  const rawPrice = (toolUse.input as any)?.price_estimate;
+  raw.price_estimate = normalizePriceEstimate(rawPrice);
+
+  // Diagnostics: if the price is missing/zero, tell us WHY (truncation vs. the
+  // model returning no numbers) instead of silently showing ₪0.
+  if (raw.price_estimate.suggested <= 0) {
+    console.warn('[ListingAssistant] No usable price returned', {
+      stop_reason: data?.stop_reason,
+      rawPrice,
+    });
+  }
+  if (data?.stop_reason === 'max_tokens') {
+    console.warn('[ListingAssistant] Response hit max_tokens — output was truncated.');
+  }
+
   return { result: raw, resizedUris: encoded.map((e) => e.uri) };
 }
 
@@ -852,37 +884,27 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
           <TextInput value={form.model} onChangeText={(v) => update('model', v)} className={inputClass} />
         </Field>
 
-        {(() => {
-          const catConfig = CATEGORY_CONFIG.find((c) => c.name === form.category);
-          const condAttr = catConfig?.attributes.find((a) => a.key === 'condition');
-          const condOptions = condAttr?.options ?? [
-            { label: 'New', value: 'New' }, { label: 'Like New', value: 'Like New' },
-            { label: 'Good', value: 'Good' }, { label: 'Fair', value: 'Fair' },
-          ];
-          return (
-            <Field label="Condition">
-              <View className="flex-row flex-wrap gap-2">
-                {condOptions.map((opt) => {
-                  const active = form.condition === opt.value;
-                  return (
-                    <TouchableOpacity
-                      key={opt.value}
-                      onPress={() => update('condition', opt.value)}
-                      className={`px-4 py-2 rounded-full border ${
-                        active ? 'bg-brand-primary border-brand-primary'
-                               : 'bg-surface-cardLight dark:bg-surface-cardDark border-slate-200 dark:border-slate-800'
-                      }`}
-                    >
-                      <Text className={`font-semibold ${active ? 'text-white' : 'text-text-primary dark:text-text-darkPrimary'}`}>
-                        {opt.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </Field>
-          );
-        })()}
+        {/* Condition is assessed by the AI from the photos and is NOT editable by the
+            seller — this keeps the "AI Verified" condition trustworthy. Sellers can
+            still influence it through photos and "Revalue with Context", but cannot
+            manually override the grade. */}
+        <Field label="Condition">
+          <View className="flex-row items-center justify-between bg-surface-cardLight dark:bg-surface-cardDark border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3">
+            <View className="flex-row items-center">
+              <Ionicons name="shield-checkmark" size={18} color="#0F766E" />
+              <Text className="text-text-primary dark:text-text-darkPrimary font-semibold text-base ml-2">
+                {form.condition || 'Not assessed'}
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              <Ionicons name="lock-closed" size={13} color="#94A3B8" />
+              <Text className="text-text-muted dark:text-text-darkMuted text-xs font-semibold ml-1">AI-assessed</Text>
+            </View>
+          </View>
+          <Text className="text-text-muted dark:text-text-darkMuted text-xs mt-1.5">
+            The condition is set by the AI from your photos and can't be edited manually. To change it, adjust the photos or use "Revalue with Context".
+          </Text>
+        </Field>
 
         <Field label="Condition Details">
           <TextInput
@@ -894,10 +916,11 @@ export default function ListingAssistant({ onPublish }: ListingAssistantProps) {
           />
         </Field>
 
-        {/* Dynamic category attributes (storage, RAM, size, color, material, etc.) */}
+        {/* Dynamic attributes (storage, RAM, size, color, material, etc.) — resolved
+            per sub-category so each product type gets fitting fields, e.g. footwear
+            shows EU shoe sizes instead of clothing sizes. */}
         {(() => {
-          const catConfig = CATEGORY_CONFIG.find((c) => c.name === form.category);
-          const attrs = (catConfig?.attributes ?? []).filter(
+          const attrs = resolveAttributes(form.category, form.sub_category).filter(
             (a) => a.key !== 'condition' && a.key !== 'model'
           );
           if (attrs.length === 0) return null;
